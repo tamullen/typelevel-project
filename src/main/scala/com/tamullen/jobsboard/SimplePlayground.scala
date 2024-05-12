@@ -1,4 +1,4 @@
-package com.tamullen.jobsboard.playground
+package com.tamullen.jobsboard
 
 object SimplePlayground {
   def main(args: Array[String]): Unit = {
