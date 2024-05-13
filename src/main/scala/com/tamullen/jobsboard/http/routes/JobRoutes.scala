@@ -10,6 +10,7 @@ import org.http4s.*
 import org.http4s.dsl.*
 import org.http4s.dsl.impl.*
 import org.http4s.server.Router
+import org.typelevel.log4cats.Logger
 
 import scala.collection.mutable
 import scala.collection.mutable.Map
@@ -19,7 +20,7 @@ import com.tamullen.jobsboard.http.responses.*
 
 
 
-class JobRoutes[F[_] : Concurrent] extends Http4sDsl[F] {
+class JobRoutes[F[_] : Concurrent: Logger] extends Http4sDsl[F] {
 
   // "database"
   private val database = mutable.Map[UUID, Job]()
@@ -51,11 +52,16 @@ class JobRoutes[F[_] : Concurrent] extends Http4sDsl[F] {
     ).pure[F]
   }
 
+  import com.tamullen.jobsboard.logging.Syntax._
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "create" =>
       for {
-        jobInfo <- req.as[JobInfo]
+        _ <- Logger[F].info("Trying to add job")
+        jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
+        _ <- Logger[F].info(s"Parsed job info: $jobInfo")
         job <- createJob(jobInfo)
+        _ <- Logger[F].info(s"Created Job: $job")
+        _ <- database.put(job.id, job).pure[F]
         resp <- Created(job.id)
       } yield resp
   }
@@ -80,8 +86,8 @@ class JobRoutes[F[_] : Concurrent] extends Http4sDsl[F] {
       database.get(id) match {
         case Some(job) =>
           for {
-            jobInfo <- req.as[JobInfo]
-            _ <- database.remove(id).pure[F]
+            _ <- Logger[F].info(s"Deleting: ${database.get(id)}")
+            _ <- database.remove(job.id).pure[F]
             resp <- Ok()
           } yield resp
         case None => NotFound(FailureResponse(s"Cannot delete job $id: Not found"))
@@ -94,5 +100,5 @@ class JobRoutes[F[_] : Concurrent] extends Http4sDsl[F] {
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent] = new JobRoutes[F]
+  def apply[F[_]: Concurrent: Logger] = new JobRoutes[F]
 }
