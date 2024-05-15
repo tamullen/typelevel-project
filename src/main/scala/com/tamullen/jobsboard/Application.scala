@@ -10,7 +10,7 @@ import org.http4s.ember.server.EmberServerBuilder
 import pureconfig.error.ConfigReaderException
 import com.tamullen.config.*
 import com.tamullen.config.syntax.*
-import com.tamullen.jobsboard.http.HttpApi
+import com.tamullen.jobsboard.modules._
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 // import com.tamullen.jobsboard.http.routes.JobRoutes
@@ -23,12 +23,16 @@ object Application extends IOApp.Simple {
 
 
   override def run: IO[Unit] = ConfigSource.default.loadF[IO, EmberConfig].flatMap { config =>
-    EmberServerBuilder
-      .default[IO]
-      .withHost(config.host)
-      .withPort(config.port)
-      .withHttpApp(HttpApi[IO].endpoints.orNotFound)
-      .build
-      .use(_ => IO.println("Testing Routes!") *> IO.never)
+    val appResource = for {
+      core <- Core[IO]
+      httpApi <- HttpApi[IO](core)
+      server <- EmberServerBuilder
+        .default[IO]
+        .withHost(config.host)
+        .withPort(config.port)
+        .withHttpApp(httpApi.endpoints.orNotFound)
+        .build
+    } yield server
+    appResource.use(_ => IO.println("Testing Routes!") *> IO.never)
   }
 }
