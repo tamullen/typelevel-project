@@ -2,6 +2,7 @@ package com.tamullen.jobsboard.http.routes
 
 import io.circe.generic.auto.*
 import org.http4s.circe.CirceEntityCodec.*
+
 import cats.Monad
 import cats.*
 import cats.effect.*
@@ -22,9 +23,10 @@ import com.tamullen.jobsboard.core._
 import com.tamullen.jobsboard.http.responses.*
 import com.tamullen.jobsboard.core.Jobs
 import com.tamullen.jobsboard.logging.Syntax._
+import com.tamullen.jobsboard.http.validation.syntax._
 
 
-class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends Http4sDsl[F] {
+class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
 
   // "database"
   //private val database = mutable.Map[UUID, Job]()
@@ -48,31 +50,38 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends Http4
      }
   }
 
-  // POST /jobs { jobInfo }
+  // refined library
+  // checked at compile time - increase compile time
+  // lowers Developer Experience
 
+  // POST /jobs { jobInfo }
   private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "create" =>
-      for {
-        _ <- Logger[F].info("Trying to add job")
-        jobInfo <- req.as[JobInfo].logError(e => s"Parsing payload failed: $e")
-        _ <- Logger[F].info(s"Parsed job info: $jobInfo")
-        jobId <- jobs.create("TODO@tamullen.com", jobInfo)
-        _ <- Logger[F].info(s"Created Job: $jobId")
-        resp <- Created(jobId)
-      } yield resp
+      req.validate[JobInfo] { jobInfo =>
+        for {
+          _ <- Logger[F].info("Trying to add job")
+//          jobInfo <- req.validate[JobInfo].logError(e => s"Parsing payload failed: $e")
+          _ <- Logger[F].info(s"Parsed job info: $jobInfo")
+          jobId <- jobs.create("TODO@tamullen.com", jobInfo)
+          _ <- Logger[F].info(s"Created Job: $jobId")
+          resp <- Created(jobId)
+        } yield resp
+      }
   }
 
   // PUT /jobs/uuid { jobInfo }
   private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ PUT -> Root / UUIDVar(id) =>
+      req.validate[JobInfo] { jobInfo =>
         for {
-          jobInfo <- req.as[JobInfo]
+//          jobInfo <- req.as[JobInfo] don't need because validate parses the JobInfo already.
           maybeNewJob <- jobs.update(id, jobInfo)
           resp <- maybeNewJob match {
             case Some(job) => Ok()
             case None => NotFound(FailureResponse(s"Cannot update job $id: Not found"))
           }
         } yield resp
+      }
   }
 
   // DELETE /jobs/uuid
