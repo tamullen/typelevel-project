@@ -6,25 +6,29 @@ import com.tamullen.jobsboard.domain.user.Role._
 trait UsersFixture {
   val Travis = User(
       "travis@test.com",
-      "tamullen",
+      "$2a$10$vQdL/KO4Nf5m26EPOyM9jOeVJwbc3n97QQ7sRmeA/BHe7wJeAwP3W", // tamullen
       Some("Travis"),
       Some("Mullen"),
       Some("tamullen"),
       Role.ADMIN
     )
+
+  val travisEmail = Travis.email
   
   val Amber = User(
     "amber@test.com",
-    "amanley",
+    "$2a$10$7wVKg4nQ/ZsWUR4XmBy1VOY2rAX0dojNpony6SkerCpeHe/nXkTQq", // amanley
     Some("Amber"),
     Some("Manley"),
     Some("tamullen"),
     Role.RECRUITER
   )
 
+  val amberEmail = Amber.email
+
   val NewUser = User(
     "newuser@gmail.com",
-    "simplepassword",
+    "$2a$10$e46GmU3fTNkwhUncC4KhVO244fjb7sWHc8bk0HOdNOZvZ.DxaWhYy", // simplepassword
     Some("New"),
     Some("User"),
     Some("test company"),
@@ -33,7 +37,7 @@ trait UsersFixture {
 
   val UpdatedTravis = User(
     "travis@test.com",
-    "tamullen",
+    "$2a$10$i8KpMuvwVLBeO8tKYK3NFulfawv.QyGRa98Mi4qt/.nsw42Ui0QIq", // test2
     Some("Travis"),
     Some("Mullen"),
     Some("Eeveelushop"),

@@ -19,7 +19,7 @@ INSERT INTO users (
              role
 ) VALUES (
      'travis@test.com',
-     'tamullen',
+     '$2a$10$vQdL/KO4Nf5m26EPOyM9jOeVJwbc3n97QQ7sRmeA/BHe7wJeAwP3W',
      'Travis',
      'Mullen',
      'tamullen',
@@ -35,7 +35,7 @@ INSERT INTO users (
              role
 ) VALUES (
      'amber@test.com',
-     'amanley',
+     '$2a$10$7wVKg4nQ/ZsWUR4XmBy1VOY2rAX0dojNpony6SkerCpeHe/nXkTQq',
      'Amber',
      'Manley',
      'tamullen',
