@@ -2,12 +2,11 @@ package com.tamullen.jobsboard.http.routes
 
 import io.circe.generic.auto.*
 import org.http4s.circe.CirceEntityCodec.*
-
 import cats.Monad
 import cats.*
 import cats.effect.*
 import cats.implicits.*
-
+import com.tamullen.config.PaginationConfig
 import org.http4s.*
 import org.http4s.dsl.*
 import org.http4s.dsl.impl.*
@@ -17,26 +16,27 @@ import org.typelevel.log4cats.Logger
 import scala.collection.mutable
 import scala.collection.mutable.Map
 import java.util.UUID
-
 import com.tamullen.jobsboard.domain.Job.*
-import com.tamullen.jobsboard.core._
+import com.tamullen.jobsboard.core.*
 import com.tamullen.jobsboard.http.responses.*
 import com.tamullen.jobsboard.core.Jobs
-import com.tamullen.jobsboard.logging.Syntax._
-import com.tamullen.jobsboard.http.validation.syntax._
+import com.tamullen.jobsboard.logging.Syntax.*
+import com.tamullen.jobsboard.http.validation.syntax.*
+import com.tamullen.jobsboard.domain.pagination.Pagination
 
 
 class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
 
-  // "database"
-  //private val database = mutable.Map[UUID, Job]()
+  object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
+  object LimitQueryParam extends OptionalQueryParamDecoderMatcher[Int]("limit")
 
 
-  // POST -> /jobs?offset=x&limit=y { filters } // TODO add query params and filters
+  // POST -> /jobs?limit=x&offset=y { filters } // TODO add query params and filters
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case POST -> Root =>
+    case req @ POST -> Root  :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
       for {
-        jobslist <- jobs.all()
+        filter <- req.as[JobFilter]
+        jobslist <- jobs.all(filter, Pagination(limit, offset)(new PaginationConfig))
         resp <- Ok(jobslist)
       } yield resp
   }

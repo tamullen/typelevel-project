@@ -13,6 +13,9 @@ import org.scalatest.matchers.should.Matchers
 
 import com.tamullen.jobsboard.fixtures.JobFixture
 
+import org.typelevel.log4cats.Logger
+import org.typelevel.log4cats.slf4j.Slf4jLogger
+
 class JobsSpec
   extends AsyncFreeSpec
   with AsyncIOSpec
@@ -21,6 +24,7 @@ class JobsSpec
   with JobFixture {
   val initScript: String = "sql/jobs.sql"
 
+  given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
   "Jobs 'algebra/module" - {
     "should return no job if the given UUID does not exist" in {
       transactor.use { xa =>
