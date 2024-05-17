@@ -5,20 +5,22 @@ import cats.implicits.*
 import cats.effect.testing.scalatest.AsyncIOSpec
 
 import io.circe.generic.auto.*
-import org.http4s.circe.CirceEntityCodec.*
 
+import org.http4s.circe.CirceEntityCodec.*
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
+
 import java.util.UUID
 
 import org.http4s.HttpRoutes
-import org.http4s.dsl._
-import org.http4s._
-import org.http4s.implicits._
+import org.http4s.dsl.*
+import org.http4s.*
+import org.http4s.implicits.*
 
 import com.tamullen.jobsboard.fixtures.*
 import com.tamullen.jobsboard.core.*
 import com.tamullen.jobsboard.domain.Job.*
+import com.tamullen.jobsboard.domain.pagination._
 
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -40,6 +42,10 @@ class JobRoutesSpec
 
     override def all(): IO[List[Job]] =
       IO.pure(List(AwesomeJob))
+
+    override def all(filter: JobFilter, pagination: Pagination): IO[List[Job]] =
+      if (filter.remote) IO.pure(List())
+      else IO.pure(List(AwesomeJob))
 
     override def find(id: UUID): IO[Option[Job]] =
       if (id == AwesomeJobUuid)
@@ -88,6 +94,7 @@ class JobRoutesSpec
         // simulate an HTTP request
         response <- jobRoutes.orNotFound.run(
           Request(method = Method.POST, uri = uri"/jobs/")
+            .withEntity(JobFilter()) // empty filter
         )
         // get the HTTP response
         retrieved <- response.as[List[Job]]
@@ -95,6 +102,23 @@ class JobRoutesSpec
       } yield {
         response.status shouldBe Status.Ok
         retrieved shouldBe List(AwesomeJob)
+      }
+    }
+
+    "should return a all jobs that satisfy a filter" in {
+      // code under test
+      for {
+        // simulate an HTTP request
+        response <- jobRoutes.orNotFound.run(
+          Request(method = Method.POST, uri = uri"/jobs/")
+            .withEntity(JobFilter(remote = true)) // remote filter
+        )
+        // get the HTTP response
+        retrieved <- response.as[List[Job]]
+        // make some assertions
+      } yield {
+        response.status shouldBe Status.Ok
+        retrieved shouldBe List()
       }
     }
 

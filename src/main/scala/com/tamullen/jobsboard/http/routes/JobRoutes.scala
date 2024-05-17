@@ -16,16 +16,21 @@ import org.typelevel.log4cats.Logger
 import scala.collection.mutable
 import scala.collection.mutable.Map
 import java.util.UUID
+
 import com.tamullen.jobsboard.domain.Job.*
 import com.tamullen.jobsboard.core.*
 import com.tamullen.jobsboard.http.responses.*
 import com.tamullen.jobsboard.core.Jobs
 import com.tamullen.jobsboard.logging.Syntax.*
 import com.tamullen.jobsboard.http.validation.syntax.*
-import com.tamullen.jobsboard.domain.pagination.Pagination
+import com.tamullen.jobsboard.http.validation._
+import com.tamullen.jobsboard.domain.pagination._
+import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
 
 class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
+//  given Pages: PaginationConfig =
+//    new PaginationConfig
 
   object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
   object LimitQueryParam extends OptionalQueryParamDecoderMatcher[Int]("limit")
@@ -36,7 +41,7 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  Http
     case req @ POST -> Root  :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
       for {
         filter <- req.as[JobFilter]
-        jobslist <- jobs.all(filter, Pagination(limit, offset)(new PaginationConfig))
+        jobslist <- jobs.all(filter, Pagination(limit, offset)) //(new PaginationConfig))
         resp <- Ok(jobslist)
       } yield resp
   }

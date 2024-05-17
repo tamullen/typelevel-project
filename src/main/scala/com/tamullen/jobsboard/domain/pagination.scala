@@ -17,10 +17,16 @@ import com.tamullen.jobsboard.modules._
 object pagination {
   final case class Pagination(limit: Int, offset: Int)
 
+
   object Pagination {
-    def apply(maybeLimit: Option[Int], maybeOffset: Option[Int])(pages: PaginationConfig) = {
+    given Pages: PaginationConfig =
+      new PaginationConfig
+    def apply(maybeLimit: Option[Int], maybeOffset: Option[Int])(using pages: PaginationConfig) = {
         new Pagination(maybeLimit.getOrElse(pages.nPages), maybeOffset.getOrElse(0))
     }
+
+    def default(using pages: PaginationConfig) =
+      new Pagination(limit = pages.nPages, 0)
   }
 }
 

@@ -1,20 +1,21 @@
 package com.tamullen.jobsboard.core
 
 import cats.effect.testing.scalatest.AsyncIOSpec
-import cats.effect._
-import cats.implicits._
-
-import doobie.util._
-import doobie.postgres.implicits._
-import doobie.implicits._
-
+import cats.effect.*
+import cats.implicits.*
+import com.tamullen.jobsboard.domain.pagination._
+import com.tamullen.jobsboard.domain.Job._
+import doobie.util.*
+import doobie.postgres.implicits.*
+import doobie.implicits.*
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
-
 import com.tamullen.jobsboard.fixtures.JobFixture
-
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
+import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
+import com.tamullen.jobsboard.http.validation._
+import com.tamullen.jobsboard.http.validation.syntax.*
 
 class JobsSpec
   extends AsyncFreeSpec
@@ -118,6 +119,30 @@ class JobsSpec
         } yield numberOfDeletedJobs
 
         program.asserting (_ shouldBe 0)
+      }
+    }
+
+    "should filter remote jobs" in {
+      transactor.use { xa =>
+        val program = for {
+          jobs <- LiveJobs[IO](xa)
+          filteredJobs <- jobs.all(JobFilter(remote = true), Pagination.default)
+        } yield filteredJobs
+
+        program.asserting(_ shouldBe List())
+      }
+    }
+
+    "should filter jobs by tags" in {
+      transactor.use { xa =>
+        val program = for {
+          jobs <- LiveJobs[IO](xa)
+          filteredJobs <- jobs.all(
+            JobFilter(tags = List("scala", "cats", "zio")),
+            Pagination.default)
+        } yield filteredJobs
+
+        program.asserting(_ shouldBe List(AwesomeJob))
       }
     }
   }
