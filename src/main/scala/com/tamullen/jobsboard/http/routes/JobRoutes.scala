@@ -25,12 +25,14 @@ import com.tamullen.jobsboard.logging.Syntax.*
 import com.tamullen.jobsboard.http.validation.syntax.*
 import com.tamullen.jobsboard.http.validation._
 import com.tamullen.jobsboard.domain.pagination._
-import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
+//import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
 
 class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
 //  given Pages: PaginationConfig =
 //    new PaginationConfig
+
+  given pages: PaginationConfig = new PaginationConfig()
 
   object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
   object LimitQueryParam extends OptionalQueryParamDecoderMatcher[Int]("limit")

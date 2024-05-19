@@ -14,6 +14,7 @@ trait UsersFixture {
     )
 
   val travisEmail = Travis.email
+  val travisPassword = "tamullen"
   
   val Amber = User(
     "amber@test.com",
@@ -25,6 +26,7 @@ trait UsersFixture {
   )
 
   val amberEmail = Amber.email
+  val amberPassword = "amanley"
 
   val NewUser = User(
     "newuser@gmail.com",
@@ -42,6 +44,22 @@ trait UsersFixture {
     Some("Mullen"),
     Some("Eeveelushop"),
     Role.ADMIN
+  )
+
+  val NewUserTravis = NewUserInfo(
+    travisEmail,
+    travisPassword,
+    Some("Travis"),
+    Some("Mullen"),
+    Some("tamullen")
+  )
+
+  val NewUserAmber = NewUserInfo(
+    amberEmail,
+    amberPassword,
+    Some("Amber"),
+    Some("Manley"),
+    Some("tamullen")
   )
 
 }

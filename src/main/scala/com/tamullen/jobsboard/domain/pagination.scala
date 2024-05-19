@@ -19,8 +19,8 @@ object pagination {
 
 
   object Pagination {
-    given Pages: PaginationConfig =
-      new PaginationConfig
+//    given Pages: PaginationConfig =
+//      new PaginationConfig
 
     def apply(maybeLimit: Option[Int], maybeOffset: Option[Int])(using pages: PaginationConfig) = {
         new Pagination(maybeLimit.getOrElse(pages.nPages), maybeOffset.getOrElse(0))

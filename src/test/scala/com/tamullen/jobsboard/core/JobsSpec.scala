@@ -3,20 +3,18 @@ package com.tamullen.jobsboard.core
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.effect.*
 import cats.implicits.*
-
+import com.tamullen.config.PaginationConfig
 import doobie.util.*
 import doobie.postgres.implicits.*
 import doobie.implicits.*
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
-
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-
-import com.tamullen.jobsboard.domain.pagination._
-import com.tamullen.jobsboard.domain.Job._
+import com.tamullen.jobsboard.domain.pagination.*
+import com.tamullen.jobsboard.domain.Job.*
 import com.tamullen.jobsboard.fixtures.JobFixture
-import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
+//import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 import com.tamullen.jobsboard.http.validation._
 import com.tamullen.jobsboard.http.validation.syntax.*
 
@@ -27,6 +25,7 @@ class JobsSpec
   with DoobieSpec
   with JobFixture {
   val initScript: String = "sql/jobs.sql"
+  given pages: PaginationConfig = new PaginationConfig()
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
   "Jobs 'algebra/module" - {
