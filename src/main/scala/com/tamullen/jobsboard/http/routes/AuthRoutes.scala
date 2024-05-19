@@ -17,6 +17,8 @@ import org.http4s.{HttpRoutes, Response}
 import org.http4s.server.Router
 import org.http4s.Status
 
+import scala.language.implicitConversions
+
 class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpValidationDsl[F] {
 
   private val authenticator = auth.authenticator
@@ -80,9 +82,21 @@ class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpV
       } yield resp
   }
 
+  // DELETE /auth/users/email
+  private val deleteUserRoute: AuthRoute[F] = {
+    case req @ DELETE -> Root / "users" / email asAuthed user =>
+      // auth - delete user
+     auth.delete(email).flatMap {
+       case true => Ok()
+       case false => NotFound()
+     }
+  }
+
   val unauthedRoutes  = (loginRoute <+> createUserRoute)
   val authedRoutes = securedHandler.liftService(
-    TSecAuthService(changePasswordRoute.orElse(logoutRoute))
+    changePasswordRoute.restrictedTo(allRoles) |+|
+      logoutRoute.restrictedTo(allRoles) |+|
+      deleteUserRoute.restrictedTo(adminOnly)
   )
 
   val routes = Router (
