@@ -25,15 +25,17 @@ class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpV
   // POST /auth/login { LoginInfo } => 200 Ok with JWT as Autherization: Bearer
   private val loginRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "login" => {
-      val maybeJwtToken = for {
-        loginInfo <- req.as[LoginInfo]
-        maybeToken <- auth.login(loginInfo.email, loginInfo.password)
-        _ <- Logger[F].info(s"User logging in: ${loginInfo.email}")
-      } yield maybeToken
+      req.validate[LoginInfo] { loginInfo =>
+        val maybeJwtToken = for {
+//          loginInfo <- req.as[LoginInfo]
+          maybeToken <- auth.login(loginInfo.email, loginInfo.password)
+          _ <- Logger[F].info(s"User logging in: ${loginInfo.email}")
+        } yield maybeToken
 
-      maybeJwtToken.map {
-        case Some(token) => authenticator.embed(Response(Status.Ok), token) // Authorization: Bearer
-        case None => Response(Status.Unauthorized)
+        maybeJwtToken.map {
+          case Some(token) => authenticator.embed(Response(Status.Ok), token) // Authorization: Bearer
+          case None => Response(Status.Unauthorized)
+        }
       }
     }
   }
@@ -41,28 +43,31 @@ class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpV
   // post /auth/users { NewUserInfo } => 201 Created or BadRequest if user already exists
   private val createUserRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
     case req @ POST -> Root / "users" =>
-      for {
-        newUserInfo <- req.as[NewUserInfo]
-        maybeNewUser <- auth.signUp(newUserInfo)
-        response <- maybeNewUser match {
-          case Some(user) => Created(user.email)
-          case None => BadRequest(s"User with email ${newUserInfo.email} already exists.")
-        }
-      } yield response
+      req.validate[NewUserInfo] { newUserInfo =>
+        for {
+          maybeNewUser <- auth.signUp(newUserInfo)
+          response <- maybeNewUser match {
+            case Some(user) => Created(user.email)
+            case None => BadRequest(s"User with email ${newUserInfo.email} already exists.")
+          }
+        } yield response
+      }
   }
 
   // PUT /auth/users/password { NewPasswordInfo } { Authorization: Bearer {JWT} } => 200 Ok
   private val changePasswordRoute: AuthRoute[F] = {
     case req @ PUT -> Root / "users" / "password" asAuthed user =>
-      for {
-        newPasswordInfo <- req.request.as[NewPasswordInfo]
-        maybeUserOrError <- auth.changePassword(user.email, newPasswordInfo)
-        resp <- maybeUserOrError match {
-          case Right(Some(_)) => Ok()
-          case Right(None) => NotFound(FailureResponse(s"User ${user.email} not found."))
-          case Left(_) => Forbidden()
-        }
-      } yield resp
+      req.request.validate[NewPasswordInfo] { newPasswordInfo =>
+        for {
+          newPasswordInfo <- req.request.as[NewPasswordInfo]
+          maybeUserOrError <- auth.changePassword(user.email, newPasswordInfo)
+          resp <- maybeUserOrError match {
+            case Right(Some(_)) => Ok()
+            case Right(None) => NotFound(FailureResponse(s"User ${user.email} not found."))
+            case Left(_) => Forbidden()
+          }
+        } yield resp
+      }
   }
 
   // POST /auth/logout { Authorization: Bearer {JWT} } => 200 Ok
