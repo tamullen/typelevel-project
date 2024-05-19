@@ -4,11 +4,12 @@ import cats.data.*
 import cats.*
 import cats.effect.*
 import cats.effect.testing.scalatest.AsyncIOSpec
+import com.tamullen.config.SecurityConfig
 import com.tamullen.jobsboard.domain.auth.NewPasswordInfo
 import com.tamullen.jobsboard.domain.user.*
 import com.tamullen.jobsboard.domain.security.*
 import com.tamullen.jobsboard.fixtures.*
-import com.tamullen.jobsboard.http.validation._
+import com.tamullen.jobsboard.http.validation.*
 import org.scalatest.freespec.AsyncFreeSpec
 import org.scalatest.matchers.should.Matchers
 import org.typelevel.log4cats.Logger
@@ -28,6 +29,8 @@ class AuthSpec
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
 
+  val mockedConfig = SecurityConfig("secret", 1.day)
+
   private val mockedUsers: Users[IO] = new Users[IO] {
     override def find(email: String): IO[Option[User]] =
       if (email == travisEmail) IO.pure(Some(Travis))
@@ -40,28 +43,28 @@ class AuthSpec
     override def delete(email: String): IO[Boolean] = IO.pure(true)
   }
 
-  val mockedAuthenticator: Authenticator[IO] = {
-    // key for hashing
-    val key = HMACSHA256.unsafeGenerateKey
-    // identity store to retrieve users
-    val idStore: IdentityStore[IO, String, User] = (email: String) =>
-      if (email == travisEmail) OptionT.pure(Travis)
-      else if (email == amberEmail) OptionT.pure(Amber)
-      else OptionT.none[IO, User]
-
-    JWTAuthenticator.unbacked.inBearerToken(
-      1.day, // expiration of tokesn
-      None, // max idle time (optional)
-      idStore, // identity store
-      key // hash key
-    )
-  }
+//  val mockedAuthenticator: Authenticator[IO] = {
+//    // key for hashing
+//    val key = HMACSHA256.unsafeGenerateKey
+//    // identity store to retrieve users
+//    val idStore: IdentityStore[IO, String, User] = (email: String) =>
+//      if (email == travisEmail) OptionT.pure(Travis)
+//      else if (email == amberEmail) OptionT.pure(Amber)
+//      else OptionT.none[IO, User]
+//
+//    JWTAuthenticator.unbacked.inBearerToken(
+//      1.day, // expiration of tokesn
+//      None, // max idle time (optional)
+//      idStore, // identity store
+//      key // hash key
+//    )
+//  }
 
 
   "Auth 'algebra'" - {
     "Login should return None if the user doesn't exist" in {
         val program = for {
-          auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+          auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
           maybeToken <- auth.login("none@test.com", "password")
         } yield maybeToken
         program.asserting(_ shouldBe None)
@@ -69,7 +72,7 @@ class AuthSpec
 
     "Login should return None if the user exists but the password is wrong" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         maybeToken <- auth.login(travisEmail, "password")
       } yield maybeToken
       program.asserting(_ shouldBe None)
@@ -77,7 +80,7 @@ class AuthSpec
 
     "Login should return a token if the user exists and the password is correct" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         maybeToken <- auth.login(travisEmail, "tamullen")
       } yield maybeToken
       program.asserting(_ shouldBe defined)
@@ -85,7 +88,7 @@ class AuthSpec
 
     "signing up should not create a user with an existing email" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         maybeUser <- auth.signUp(NewUserInfo(
           travisEmail,
           "somePassword",
@@ -100,7 +103,7 @@ class AuthSpec
 
     "signing up should create a completely new user" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         maybeUser <- auth.signUp(NewUserInfo(
           "bob@test.com",
           "somePassword",
@@ -124,7 +127,7 @@ class AuthSpec
 
     "changePassword should return None if the user doesn't exist" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         result <- auth.changePassword("alice@test.com", NewPasswordInfo("oldpw", "newpw"))
       } yield result
 
@@ -133,7 +136,7 @@ class AuthSpec
 
     "changePassword should return a Left with an error if the user exists and the password is incorrect." in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         result <- auth.changePassword(travisEmail, NewPasswordInfo("oldpw", "newpw"))
       } yield result
 
@@ -142,7 +145,7 @@ class AuthSpec
 
     "changePassword should correctly change the password if all the details are correct" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers, mockedAuthenticator)
+        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
         result <- auth.changePassword(travisEmail, NewPasswordInfo("tamullen", "scalarocks"))
         isNicePassword <- result match {
           case Right(Some(user)) =>
