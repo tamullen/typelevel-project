@@ -59,8 +59,10 @@ class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpV
   // PUT /auth/users/password { NewPasswordInfo } { Authorization: Bearer {JWT} } => 200 Ok
   private val changePasswordRoute: AuthRoute[F] = {
     case req @ PUT -> Root / "users" / "password" asAuthed user =>
+
       req.request.validate[NewPasswordInfo] { newPasswordInfo =>
         for {
+          _ <- Logger[F].info(s"Trying to change password for ${req.authenticator}")
           newPasswordInfo <- req.request.as[NewPasswordInfo]
           maybeUserOrError <- auth.changePassword(user.email, newPasswordInfo)
           resp <- maybeUserOrError match {
@@ -77,6 +79,7 @@ class AuthRoutes[F[_]: Concurrent : Logger] private(auth: Auth[F]) extends HttpV
     case req @ POST -> Root / "logout" asAuthed _ =>
       val token = req.authenticator
       for {
+        _ <- Logger[F].info(s"Logging out ${token}")
         _ <- authenticator.discard(token)
         resp <- Ok()
       } yield resp

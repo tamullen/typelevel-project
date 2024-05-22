@@ -18,6 +18,7 @@ object security {
   type JwtToken = AugmentedJWT[Crypto, String]
   type Authenticator[F[_]] = JWTAuthenticator[F, String, User, Crypto]
   type AuthRoute[F[_]] = PartialFunction[SecuredRequest[F, User, JwtToken], F[Response[F]]]
+  type SecuredHandler[F[_]] = SecuredRequestHandler[F, String, User, JwtToken]
   type AuthRBAC[F[_]] = BasicRBAC[F, Role, User, JwtToken]
 
   // Role based access control

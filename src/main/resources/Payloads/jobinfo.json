@@ -2,7 +2,7 @@
   "company": "test",
   "title": "software engineer",
   "description": "best job",
-  "externalUrl": "test.com",
+  "externalUrl": "http://test.com",
   "remote": false,
   "location": "test"
 }

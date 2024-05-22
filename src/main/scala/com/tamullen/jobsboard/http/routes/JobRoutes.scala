@@ -6,7 +6,7 @@ import cats.Monad
 import cats.*
 import cats.effect.*
 import cats.implicits.*
-import com.tamullen.config.PaginationConfig
+import tsec.authentication.{SecuredRequestHandler, asAuthed}
 import org.http4s.*
 import org.http4s.dsl.*
 import org.http4s.dsl.impl.*
@@ -15,24 +15,32 @@ import org.typelevel.log4cats.Logger
 
 import scala.collection.mutable
 import scala.collection.mutable.Map
-import java.util.UUID
 
+
+import java.util.UUID
+import com.tamullen.config.PaginationConfig
 import com.tamullen.jobsboard.domain.Job.*
+import com.tamullen.jobsboard.domain.security.*
+import com.tamullen.jobsboard.domain.security.AuthRoute
 import com.tamullen.jobsboard.core.*
 import com.tamullen.jobsboard.http.responses.*
 import com.tamullen.jobsboard.core.Jobs
 import com.tamullen.jobsboard.logging.Syntax.*
 import com.tamullen.jobsboard.http.validation.syntax.*
-import com.tamullen.jobsboard.http.validation._
-import com.tamullen.jobsboard.domain.pagination._
+import com.tamullen.jobsboard.http.validation.*
+import com.tamullen.jobsboard.domain.pagination.*
+import com.tamullen.jobsboard.domain.user.User
+
+//import scala.language.implicitConversions
 //import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
 
-class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
+class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F], authenticator: Authenticator[F]) extends  HttpValidationDsl[F] {
 //  given Pages: PaginationConfig =
 //    new PaginationConfig
 
   given pages: PaginationConfig = new PaginationConfig()
+  private val securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
 
   object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
   object LimitQueryParam extends OptionalQueryParamDecoderMatcher[Int]("limit")
@@ -62,14 +70,13 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  Http
   // lowers Developer Experience
 
   // POST /jobs { jobInfo }
-  private val createJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "create" =>
-      req.validate[JobInfo] { jobInfo =>
+  private val createJobRoute: AuthRoute[F] = {
+    case req @ POST -> Root / "create" asAuthed _ =>
+      req.request.validate[JobInfo] { jobInfo =>
         for {
           _ <- Logger[F].info("Trying to add job")
-//          jobInfo <- req.validate[JobInfo].logError(e => s"Parsing payload failed: $e")
           _ <- Logger[F].info(s"Parsed job info: $jobInfo")
-          jobId <- jobs.create("TODO@tamullen.com", jobInfo)
+          jobId <- jobs.create("daniel@rockthejvm.com", jobInfo)
           _ <- Logger[F].info(s"Created Job: $jobId")
           resp <- Created(jobId)
         } yield resp
@@ -77,39 +84,53 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F]) extends  Http
   }
 
   // PUT /jobs/uuid { jobInfo }
-  private val updateJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ PUT -> Root / UUIDVar(id) =>
-      req.validate[JobInfo] { jobInfo =>
-        for {
-//          jobInfo <- req.as[JobInfo] don't need because validate parses the JobInfo already.
-          maybeNewJob <- jobs.update(id, jobInfo)
-          resp <- maybeNewJob match {
-            case Some(job) => Ok()
-            case None => NotFound(FailureResponse(s"Cannot update job $id: Not found"))
-          }
-        } yield resp
+  private val updateJobRoute: AuthRoute[F] = {
+    case req @ PUT -> Root / UUIDVar(id) asAuthed user =>
+      req.request.validate[JobInfo] { jobInfo =>
+        jobs.find(id).flatMap {
+          case None =>
+            NotFound(FailureResponse(s"Cannot update job $id: Not Found"))
+          case Some(job) if user.owns(job) || user.isAdmin =>
+            jobs.update(id, jobInfo) *> Ok()
+          case _ =>
+            Forbidden(FailureResponse("You can only delete your own jobs."))
+        }
+        //        for {
+        ////          jobInfo <- req.as[JobInfo] don't need because validate parses the JobInfo already.
+        //          maybeNewJob <- jobs.update(id, jobInfo)
+        //          resp <- maybeNewJob match {
+        //            case Some(job) => Ok()
+        //            case None => NotFound(FailureResponse(s"Cannot update job $id: Not found"))
+        //          }
+        //        } yield resp
       }
   }
 
   // DELETE /jobs/uuid
-  private val deleteJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ DELETE -> Root / UUIDVar(id) =>
+  private val deleteJobRoute: AuthRoute[F] = {
+    case req @ DELETE -> Root / UUIDVar(id) asAuthed user =>
       jobs.find(id).flatMap {
-        case Some(job) =>
-          for {
-            _ <- Logger[F].info(s"Deleting: ${id}")
-            _ <- jobs.delete(job.id)
-            resp <- Ok()
-          } yield resp
         case None => NotFound(FailureResponse(s"Cannot delete job $id: Not found"))
+        case Some(job) if user.owns(job) || user.isAdmin =>
+          Logger[F].info(s"Deleting: ${id}") *>
+            jobs.delete(id) *>
+            Ok()
+        case _ => Forbidden(FailureResponse("You can only delete your own jobs."))
       }
   }
 
+  val authedRoutes = securedHandler.liftService(
+    createJobRoute.restrictedTo(allRoles) |+|
+      updateJobRoute.restrictedTo(allRoles) |+|
+      deleteJobRoute.restrictedTo(allRoles)
+  )
+
+  val unauthedRoutes = allJobsRoute <+> findJobRoute
   val routes = Router(
-    "/jobs" -> (allJobsRoute <+> findJobRoute <+> createJobRoute <+> updateJobRoute <+> deleteJobRoute)
+    "/jobs" -> (unauthedRoutes <+> authedRoutes)
   )
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger] (jobs: Jobs[F]) = new JobRoutes[F](jobs)
+  def apply[F[_]: Concurrent: Logger] (jobs: Jobs[F], authenticator: Authenticator[F]) = new JobRoutes[F](jobs, authenticator)
 }
