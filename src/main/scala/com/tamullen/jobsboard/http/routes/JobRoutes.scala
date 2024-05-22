@@ -35,18 +35,18 @@ import com.tamullen.jobsboard.domain.user.User
 //import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
 
-class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F], authenticator: Authenticator[F]) extends  HttpValidationDsl[F] {
+class JobRoutes[F[_] : Concurrent: Logger : SecuredHandler] private (jobs: Jobs[F]) extends  HttpValidationDsl[F] {
 //  given Pages: PaginationConfig =
 //    new PaginationConfig
 
   given pages: PaginationConfig = new PaginationConfig()
-  private val securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
+//  private val securedHandler: SecuredHandler[F] = SecuredRequestHandler(authenticator)
 
   object OffsetQueryParam extends OptionalQueryParamDecoderMatcher[Int]("offset")
   object LimitQueryParam extends OptionalQueryParamDecoderMatcher[Int]("limit")
 
 
-  // POST -> /jobs?limit=x&offset=y { filters } // TODO add query params and filters
+  // POST -> /jobs?limit=x&offset=y { filters }
   private val allJobsRoute: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root  :? LimitQueryParam(limit) +& OffsetQueryParam(offset) =>
       for {
@@ -119,7 +119,7 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F], authenticator
       }
   }
 
-  val authedRoutes = securedHandler.liftService(
+  val authedRoutes = SecuredHandler[F].liftService(
     createJobRoute.restrictedTo(allRoles) |+|
       updateJobRoute.restrictedTo(allRoles) |+|
       deleteJobRoute.restrictedTo(allRoles)
@@ -132,5 +132,5 @@ class JobRoutes[F[_] : Concurrent: Logger] private (jobs: Jobs[F], authenticator
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger] (jobs: Jobs[F], authenticator: Authenticator[F]) = new JobRoutes[F](jobs, authenticator)
+  def apply[F[_]: Concurrent: Logger : SecuredHandler] (jobs: Jobs[F]) = new JobRoutes[F](jobs)
 }

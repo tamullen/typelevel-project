@@ -64,7 +64,7 @@ class AuthSpec
   "Auth 'algebra'" - {
     "Login should return None if the user doesn't exist" in {
         val program = for {
-          auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+          auth <- LiveAuth[IO](mockedUsers)
           maybeToken <- auth.login("none@test.com", "password")
         } yield maybeToken
         program.asserting(_ shouldBe None)
@@ -72,7 +72,7 @@ class AuthSpec
 
     "Login should return None if the user exists but the password is wrong" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         maybeToken <- auth.login(travisEmail, "password")
       } yield maybeToken
       program.asserting(_ shouldBe None)
@@ -80,7 +80,7 @@ class AuthSpec
 
     "Login should return a token if the user exists and the password is correct" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         maybeToken <- auth.login(travisEmail, "tamullen")
       } yield maybeToken
       program.asserting(_ shouldBe defined)
@@ -88,7 +88,7 @@ class AuthSpec
 
     "signing up should not create a user with an existing email" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         maybeUser <- auth.signUp(NewUserInfo(
           travisEmail,
           "somePassword",
@@ -103,7 +103,7 @@ class AuthSpec
 
     "signing up should create a completely new user" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         maybeUser <- auth.signUp(NewUserInfo(
           "bob@test.com",
           "somePassword",
@@ -127,7 +127,7 @@ class AuthSpec
 
     "changePassword should return None if the user doesn't exist" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         result <- auth.changePassword("alice@test.com", NewPasswordInfo("oldpw", "newpw"))
       } yield result
 
@@ -136,7 +136,7 @@ class AuthSpec
 
     "changePassword should return a Left with an error if the user exists and the password is incorrect." in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         result <- auth.changePassword(travisEmail, NewPasswordInfo("oldpw", "newpw"))
       } yield result
 
@@ -145,7 +145,7 @@ class AuthSpec
 
     "changePassword should correctly change the password if all the details are correct" in {
       val program = for {
-        auth <- LiveAuth[IO](mockedUsers)(mockedConfig)
+        auth <- LiveAuth[IO](mockedUsers)
         result <- auth.changePassword(travisEmail, NewPasswordInfo("tamullen", "scalarocks"))
         isNicePassword <- result match {
           case Right(Some(user)) =>

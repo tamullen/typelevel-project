@@ -42,5 +42,5 @@ trait SecuredRouteFixture extends UsersFixture {
         // Authroization: Bearer {JWT}
         Authorization(Credentials.Token(AuthScheme.Bearer, jwtString))
       }
-
+  given securedHandler: SecuredHandler[IO] = SecuredRequestHandler(mockedAuthenticator)
 }

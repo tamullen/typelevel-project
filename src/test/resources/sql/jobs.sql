@@ -45,7 +45,7 @@ INSERT INTO jobs(
   ) VALUES (
     '843df718-ec6e-4d49-9289-f799c0f40064',
     1659186086,
-    'daniel@rockthejvm.com',
+    'travis@test.com',
     'Awesome Company',
     'Tech Lead',
     'An awesome job in Berlin',

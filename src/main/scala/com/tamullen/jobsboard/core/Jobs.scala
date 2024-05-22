@@ -186,7 +186,6 @@ class LiveJobs[F[_]: MonadCancelThrow : Logger] private (xa: Transactor[F]) exte
         AND salaryHi > [filter.salary]
         AND remote = [filter.remote]
        */
-      // TODO: remove this
       // List().pure[F]
   }
 

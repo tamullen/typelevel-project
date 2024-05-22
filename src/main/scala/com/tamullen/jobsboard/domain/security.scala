@@ -20,6 +20,9 @@ object security {
   type AuthRoute[F[_]] = PartialFunction[SecuredRequest[F, User, JwtToken], F[Response[F]]]
   type SecuredHandler[F[_]] = SecuredRequestHandler[F, String, User, JwtToken]
   type AuthRBAC[F[_]] = BasicRBAC[F, Role, User, JwtToken]
+  object SecuredHandler {
+    def apply[F[_]](using handler: SecuredHandler[F]): SecuredHandler[F] = handler
+  }
 
   // Role based access control
   // BasicRBAC[F, Role, User, JwtToken]
