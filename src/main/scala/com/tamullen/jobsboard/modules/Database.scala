@@ -13,7 +13,7 @@ object Database {
     ec <- ExecutionContexts.fixedThreadPool(config.nThreads)
     xa <- HikariTransactor.newHikariTransactor[F](
       "org.postgresql.Driver",
-      config.url, // TODO move to config
+      config.url,
       config.user,
       config.pass,
       ec
