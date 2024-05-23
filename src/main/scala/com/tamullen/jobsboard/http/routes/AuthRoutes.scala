@@ -40,6 +40,16 @@ class AuthRoutes[F[_]: Concurrent : Logger : SecuredHandler] private(auth: Auth[
     }
   }
 
+  // POST /auth/reset { ForgotPasswordInfo }
+  private val forgotPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "reset" => Ok("TODO")
+  }
+
+  // POST /auth/recover { RecoverPasswordInfo }
+  private val recoverPasswordRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "recover" => Ok("TODO")
+  }
+
   // post /auth/users { NewUserInfo } => 201 Created or BadRequest if user already exists
   private val createUserRoute: HttpRoutes[F] =  HttpRoutes.of[F] {
     case req @ POST -> Root / "users" =>
