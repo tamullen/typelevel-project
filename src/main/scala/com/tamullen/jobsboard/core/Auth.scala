@@ -117,13 +117,14 @@ class LiveAuth[F[_] : Async : Logger] private (users: Users[F], tokens: Tokens[F
 
   override def recoverPasswordFromToken(email: String,
                                         token: String,
-                                        newPassword: String): F[Boolean] = for {
-    maybeUser <- users.find(email)
-    tokenIsValid <- tokens.checkToken(email, token)
-    result <- (maybeUser, tokenIsValid) match {
-      case (Some(user), true) => updateUser(user, newPassword).map(_.nonEmpty)
-      case _ => false.pure[F]
-    }
+                                        newPassword: String): F[Boolean] =
+    for {
+      maybeUser <- users.find(email)
+      tokenIsValid <- tokens.checkToken(email, token)
+      result <- (maybeUser, tokenIsValid) match {
+        case (Some(user), true) => updateUser(user, newPassword).map(_.nonEmpty)
+        case _ => false.pure[F]
+      }
   } yield result
 
   // private
