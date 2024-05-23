@@ -6,6 +6,7 @@ import cats.Monad
 import cats.*
 import cats.effect.*
 import cats.implicits.*
+import com.tamullen.jobsboard.config.PaginationConfig
 import tsec.authentication.{SecuredRequestHandler, asAuthed}
 import org.http4s.*
 import org.http4s.dsl.*
@@ -18,7 +19,6 @@ import scala.collection.mutable.Map
 
 
 import java.util.UUID
-import com.tamullen.config.PaginationConfig
 import com.tamullen.jobsboard.domain.Job.*
 import com.tamullen.jobsboard.domain.security.*
 import com.tamullen.jobsboard.domain.security.AuthRoute

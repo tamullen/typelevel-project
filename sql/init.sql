@@ -36,3 +36,12 @@ CREATE TABLE users (
 
 ALTER TABLE users
 ADD CONSTRAINT pk_users PRIMARY KEY (email);
+
+CREATE TABLE recoveryTokens (
+    email text NOT NULL,
+    token text NOT NULL,
+    expiration bigint NOT NULL
+);
+
+ALTER TABLE recoveryTokens
+ADD CONSTRAINT pk_recoverytokens PRIMARY KEY (email);

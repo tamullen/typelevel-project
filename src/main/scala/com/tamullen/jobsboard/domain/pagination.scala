@@ -3,15 +3,13 @@ package com.tamullen.jobsboard.domain
 import pureconfig.ConfigSource
 import cats._
 import cats.effect._
-import com.tamullen.config.PaginationConfig
 
 
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
 import pureconfig.error.ConfigReaderException
 
-import com.tamullen.config.*
-import com.tamullen.config.syntax.*
+import com.tamullen.jobsboard.config.PaginationConfig
 import com.tamullen.jobsboard.modules._
 
 object pagination {

@@ -1,9 +1,23 @@
 package com.tamullen.jobsboard.fixtures
 
+import cats.effect.IO
+import com.tamullen.jobsboard.core.Users
 import com.tamullen.jobsboard.domain.user.*
-import com.tamullen.jobsboard.domain.user.Role._
+import com.tamullen.jobsboard.domain.user.Role.*
 
 trait UsersFixture {
+  val mockedUsers: Users[IO] = new Users[IO] {
+    override def find(email: String): IO[Option[User]] =
+      if (email == travisEmail) IO.pure(Some(Travis))
+      else IO.pure(None)
+
+    override def create(user: User): IO[String] = IO.pure(user.email)
+
+    override def update(user: User): IO[Option[User]] = IO.pure(Some(user))
+
+    override def delete(email: String): IO[Boolean] = IO.pure(true)
+  }
+
   val Travis = User(
       "travis@test.com",
       "$2a$10$vQdL/KO4Nf5m26EPOyM9jOeVJwbc3n97QQ7sRmeA/BHe7wJeAwP3W", // tamullen

@@ -1,4 +1,4 @@
-package com.tamullen.config
+package com.tamullen.jobsboard.config
 
 import pureconfig.ConfigReader
 import com.comcast.ip4s.{Host, Port}

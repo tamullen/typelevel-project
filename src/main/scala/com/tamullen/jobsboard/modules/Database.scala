@@ -1,12 +1,10 @@
 package com.tamullen.jobsboard.modules
 
-import cats.effect._
-
+import cats.effect.*
+import com.tamullen.jobsboard.config.PostgresConfig
 import doobie.hikari.HikariTransactor
-import doobie._
-import doobie.util._
-
-import com.tamullen.config.PostgresConfig
+import doobie.*
+import doobie.util.*
 
 object Database {
   def makePostgresResource[F[_] : Async](config: PostgresConfig): Resource[F, HikariTransactor[F]] = for {

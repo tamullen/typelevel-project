@@ -2,7 +2,7 @@ package com.tamullen.jobsboard.modules
 
 import cats.effect.*
 import cats.implicits.*
-import com.tamullen.config.SecurityConfig
+import com.tamullen.jobsboard.config.SecurityConfig
 import doobie.*
 import doobie.hikari.HikariTransactor
 import doobie.util.*

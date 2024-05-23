@@ -1,4 +1,4 @@
-package com.tamullen.config
+package com.tamullen.jobsboard.config
 
 import cats.MonadError
 import cats.MonadThrow

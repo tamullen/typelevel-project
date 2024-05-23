@@ -4,7 +4,6 @@ import cats.*
 import cats.effect.*
 import cats.data.*
 import cats.implicits.*
-import com.tamullen.config.SecurityConfig
 import org.http4s.*
 import org.http4s.dsl.*
 import org.http4s.dsl.impl.*
@@ -18,7 +17,7 @@ import tsec.common.SecureRandomId
 import com.tamullen.jobsboard.core.*
 import com.tamullen.jobsboard.domain.security.*
 import com.tamullen.jobsboard.http.routes.*
-import com.tamullen.config.SecurityConfig
+import com.tamullen.jobsboard.config.SecurityConfig
 import com.tamullen.jobsboard.domain.user.User
 
 class HttpApi[F[_]: Concurrent: Logger] private (core: Core[F], authenticator: Authenticator[F]){

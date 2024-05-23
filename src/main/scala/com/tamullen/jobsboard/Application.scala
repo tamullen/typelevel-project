@@ -4,17 +4,13 @@ import cats.Monad
 import cats.effect.*
 import cats.effect.IO
 import cats.implicits.*
-
 import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
 import pureconfig.error.ConfigReaderException
-
 import org.http4s.ember.server.EmberServerBuilder
-
-import com.tamullen.config.*
-import com.tamullen.config.syntax.*
-import com.tamullen.jobsboard.modules._
-
+import com.tamullen.jobsboard.config._
+import com.tamullen.jobsboard.config.syntax._
+import com.tamullen.jobsboard.modules.*
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 // import com.tamullen.jobsboard.http.routes.JobRoutes

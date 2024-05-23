@@ -1,9 +1,10 @@
-package com.tamullen.config
+package com.tamullen.jobsboard.config
 
 import com.comcast.ip4s.{Host, Port}
 import pureconfig.ConfigReader
 import pureconfig.error.CannotConvert
 import pureconfig.generic.derivation.default.*
+
 // derives can automatically generate a given config reader of this type
 // generates given ConfigReader: ConfigReader[EmberConfig]
 final case class EmberConfig(host: Host, port: Port) derives ConfigReader

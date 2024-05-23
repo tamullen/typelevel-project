@@ -4,7 +4,7 @@ import cats.data.OptionT
 import cats.effect.kernel.MonadCancelThrow
 import cats.effect.*
 import cats.implicits.*
-import com.tamullen.config.SecurityConfig
+import com.tamullen.jobsboard.config.SecurityConfig
 import org.typelevel.log4cats.Logger
 import tsec.authentication.{AugmentedJWT, JWTAuthenticator}
 import tsec.passwordhashers.jca.BCrypt

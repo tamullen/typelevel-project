@@ -4,7 +4,7 @@ import cats.data.*
 import cats.*
 import cats.effect.*
 import cats.effect.testing.scalatest.AsyncIOSpec
-import com.tamullen.config.SecurityConfig
+import com.tamullen.jobsboard.config.SecurityConfig
 import com.tamullen.jobsboard.domain.auth.NewPasswordInfo
 import com.tamullen.jobsboard.domain.user.*
 import com.tamullen.jobsboard.domain.security.*
@@ -31,17 +31,7 @@ class AuthSpec
 
   val mockedConfig = SecurityConfig("secret", 1.day)
 
-  private val mockedUsers: Users[IO] = new Users[IO] {
-    override def find(email: String): IO[Option[User]] =
-      if (email == travisEmail) IO.pure(Some(Travis))
-      else IO.pure(None)
 
-    override def create(user: User): IO[String] = IO.pure(user.email)
-
-    override def update(user: User): IO[Option[User]] = IO.pure(Some(user))
-
-    override def delete(email: String): IO[Boolean] = IO.pure(true)
-  }
 
 //  val mockedAuthenticator: Authenticator[IO] = {
 //    // key for hashing

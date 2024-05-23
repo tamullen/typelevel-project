@@ -3,7 +3,7 @@ package com.tamullen.jobsboard.core
 import cats.effect.testing.scalatest.AsyncIOSpec
 import cats.effect.*
 import cats.implicits.*
-import com.tamullen.config.PaginationConfig
+import com.tamullen.jobsboard.config.PaginationConfig
 import doobie.util.*
 import doobie.postgres.implicits.*
 import doobie.implicits.*
