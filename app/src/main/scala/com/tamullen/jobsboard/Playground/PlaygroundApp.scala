@@ -1,16 +1,15 @@
-package com.tamullen.jobsboard
+package com.tamullen.jobsboard.Playground
 
 import cats.effect.*
-
-import scala.scalajs.js.annotation.*
 import org.scalajs.dom.*
 import tyrian.*
 import tyrian.Html.*
-
-import scala.concurrent.duration.*
 import tyrian.cmds.Logger
 
-object App {
+import scala.concurrent.duration.*
+import scala.scalajs.js.annotation.*
+
+object PlaygroundApp {
   sealed trait Msg
   case class Increment(amount: Int) extends Msg
 
@@ -18,8 +17,8 @@ object App {
 }
 
 @JSExportTopLevel("RockTheJvmApp")
-class App extends TyrianApp[App.Msg, App.Model] {
-  import App._
+class PlaygroundApp extends TyrianApp[PlaygroundApp.Msg, PlaygroundApp.Model] {
+  import PlaygroundApp.*
   // ^^ message     ^^ model = "state"
   /*
     we can send messages by
