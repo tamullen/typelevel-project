@@ -11,11 +11,12 @@ import scala.concurrent.duration.*
 import tyrian.cmds.Logger
 import core._
 import com.tamullen.jobsboard.components._
+import com.tamullen.jobsboard.pages._
 
 object App {
-  type Msg = Router.Msg
+  type Msg = Router.Msg | Page.Msg
 
-  case class Model(router: Router)
+  case class Model(router: Router, page: Page)
 }
 
 @JSExportTopLevel("RockTheJvmApp")
@@ -29,8 +30,11 @@ class App extends TyrianApp[App.Msg, App.Model] {
       - listening for an event
    */
   override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) = {
-    val (router: Router, cmd: Cmd[IO, Msg]) = Router.startAt(window.location.pathname)
-    (Model(router), cmd)
+    val location                    = window.location.pathname
+    val page                        = Page.get(location)
+    val pageCmd                     = page.initCmd
+    val (router: Router, routerCmd) = Router.startAt(location)
+    (Model(router, page), routerCmd |+| pageCmd)
   }
 
   // potentially endless stream of messages..
@@ -48,14 +52,27 @@ class App extends TyrianApp[App.Msg, App.Model] {
   // update triggered whenever we get a new message
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) =
     case msg: Router.Msg =>
-      val (newRouter, cmd) = model.router.update(msg)
-      (model.copy(router = newRouter), cmd)
+      val (newRouter, routerCmd) = model.router.update(msg)
+      if (model.router == newRouter) // not change is necessary
+        (model, Cmd.None)
+      else {
+        // location changed, need to re-render the appropriate page.
+        val newPage    = Page.get(newRouter.location)
+        val newPageCmd = newPage.initCmd
+        (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
+      }
+//      (model.copy(router = newRouter), cmd)
+    case msg: Page.Msg =>
+      // update the page
+      val (newPage, cmd) = model.page.update(msg)
+      (model.copy(page = newPage), cmd)
 
   // triggered whenever the model changes.
   override def view(model: Model): Html[Msg] =
     div(
       Header.view(model),
-      div(s"You are now at: ${model.router.location}")
+      model.page.view()
+//      div(s"You are now at: ${model.router.location}")
     )
 
 }

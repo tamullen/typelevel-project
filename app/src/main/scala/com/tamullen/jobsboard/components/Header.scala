@@ -5,6 +5,7 @@ import com.tamullen.jobsboard.core._
 import com.tamullen.jobsboard.App._
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
+import com.tamullen.jobsboard.pages._
 
 object Header {
   // Public API
@@ -13,9 +14,9 @@ object Header {
       renderLogo(),
       div(`class` := "header-nav")(
         ul(`class` := "header-links")(
-          renderNavLink("Jobs", "/jobs"),
-          renderNavLink("Login", "/login"),
-          renderNavLink("Sign Up", "/signup")
+          renderNavLink("Jobs", Page.Urls.JOBS),
+          renderNavLink("Login", Page.Urls.LOGIN),
+          renderNavLink("Sign Up", Page.Urls.SIGNUP)
         )
       )
     )
