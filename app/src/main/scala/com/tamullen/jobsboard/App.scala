@@ -9,12 +9,12 @@ import tyrian.Html.*
 
 import scala.concurrent.duration.*
 import tyrian.cmds.Logger
+import core._
 
 object App {
-  sealed trait Msg
-  case class Increment(amount: Int) extends Msg
+  type Msg = Router.Msg
 
-  case class Model(count: Int)
+  case class Model(router: Router)
 }
 
 @JSExportTopLevel("RockTheJvmApp")
@@ -27,29 +27,50 @@ class App extends TyrianApp[App.Msg, App.Model] {
       - create a subscription (listen for things)
       - listening for an event
    */
-  override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) =
-    (Model(0), Cmd.None)
+  override def init(flags: Map[String, String]): (Model, Cmd[IO, Msg]) = {
+    val (router: Router, cmd: Cmd[IO, Msg]) = Router.startAt(window.location.pathname)
+    (Model(router), cmd)
+  }
 
   // potentially endless stream of messages..
   override def subscriptions(model: Model): Sub[IO, Msg] =
-    Sub.every[IO](1.second).map(_ => Increment(1))
+    Sub
+      .make(
+        "urlChange",
+        model.router.history.state.discrete
+      ) // listener for browser history changes
+      .map(_.get)
+      .map(newLocation => Router.ChangeLocation(newLocation, true))
 
   // model can change by recieving messages.
   // model => message => (new model, ______)
   // update triggered whenever we get a new message
   override def update(model: Model): Msg => (Model, Cmd[IO, Msg]) =
-    case Increment(amount) =>
-      (
-        model.copy(count = model.count + amount),
-        Logger.consoleLog[IO](s"Changing count by $amount")
-      )
+    case msg: Router.Msg =>
+      val (newRouter, cmd) = model.router.update(msg)
+      (model.copy(router = newRouter), cmd)
 
   // triggered whenever the model changes.
   override def view(model: Model): Html[Msg] =
     div(
-      button(onClick(Increment(1)))("increase"),
-      button(onClick(Increment(-1)))("decrease"),
-      div(s"Tyrian running: ${model.count}")
+      renderNavLink("Jobs", "/jobs"),
+      renderNavLink("Login", "/login"),
+      renderNavLink("Sign Up", "/signup"),
+      div(s"You are now at: ${model.router.location}")
     )
+
+  private def renderNavLink(text: String, location: String) = {
+    a(
+      href    := location,
+      `class` := "nav-link",
+      onEvent(
+        "click",
+        e => {
+          e.preventDefault() // native JS - prevent reloading the page.
+          Router.ChangeLocation(location)
+        }
+      )
+    )(text)
+  }
 
 }
