@@ -10,6 +10,7 @@ import tyrian.Html.*
 import scala.concurrent.duration.*
 import tyrian.cmds.Logger
 import core._
+import com.tamullen.jobsboard.components._
 
 object App {
   type Msg = Router.Msg
@@ -53,24 +54,8 @@ class App extends TyrianApp[App.Msg, App.Model] {
   // triggered whenever the model changes.
   override def view(model: Model): Html[Msg] =
     div(
-      renderNavLink("Jobs", "/jobs"),
-      renderNavLink("Login", "/login"),
-      renderNavLink("Sign Up", "/signup"),
+      Header.view(model),
       div(s"You are now at: ${model.router.location}")
     )
-
-  private def renderNavLink(text: String, location: String) = {
-    a(
-      href    := location,
-      `class` := "nav-link",
-      onEvent(
-        "click",
-        e => {
-          e.preventDefault() // native JS - prevent reloading the page.
-          Router.ChangeLocation(location)
-        }
-      )
-    )(text)
-  }
 
 }
