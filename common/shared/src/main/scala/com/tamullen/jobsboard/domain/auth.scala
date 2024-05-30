@@ -20,4 +20,12 @@ object auth {
       newPassword: String
   )
 
+  final case class NewUserInfo(
+      email: String,
+      password: String,
+      firstName: Option[String],
+      lastName: Option[String],
+      company: Option[String]
+  )
+
 }

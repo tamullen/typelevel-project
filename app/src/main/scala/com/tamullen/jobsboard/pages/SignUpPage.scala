@@ -1,10 +1,15 @@
 package com.tamullen.jobsboard.pages
 
 import cats.effect.IO
-import com.tamullen.jobsboard.common._
+import io.circe.syntax.*
+import io.circe.generic.auto._
+import io.circe.parser.*
+import com.tamullen.jobsboard.common.*
+import com.tamullen.jobsboard.domain.auth.*
 import tyrian.*
 import tyrian.Html.*
 import tyrian.cmds.Logger
+import tyrian.http.*
 
 // form
 /*
@@ -44,8 +49,22 @@ case class SignUpPage(
       else if (password != confirmPassword)
         (setErrorStatus("Password fields do not match"), Cmd.None)
       else
-        (this, Logger.consoleLog[IO]("SIGNING UP", email, password, firstName, lastName, company))
-
+        (
+          this,
+          Commands.signup(
+            NewUserInfo(
+              email,
+              password,
+              Option(firstName).filter(_.nonEmpty),
+              Option(lastName).filter(_.nonEmpty),
+              Option(company).filter(_.nonEmpty)
+            )
+          )
+        )
+    case SignUpError(message) =>
+      (setErrorStatus(message), Cmd.None)
+    case SignUpSuccess(message) =>
+      (setSuccessStatus(message), Cmd.None)
     case _ => (this, Cmd.None)
   }
 
@@ -108,8 +127,11 @@ case class SignUpPage(
       input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange))
     )
   // util
-  def setErrorStatus(message: String) =
+  def setErrorStatus(message: String): Page =
     this.copy(status = Some(Page.Status(message, Page.StatusKind.ERROR)))
+
+  def setSuccessStatus(message: String): Page =
+    this.copy(status = Some(Page.Status(message, Page.StatusKind.SUCCESS)))
 }
 
 object SignUpPage {
@@ -123,4 +145,34 @@ object SignUpPage {
   // actions
   case object AttemptSignUp extends Msg
   case object NoOp          extends Msg
+  // statuses
+  case class SignUpError(message: String)   extends Msg
+  case class SignUpSuccess(message: String) extends Msg
+
+  object Endpoints {
+    val signUp = new Endpoint[Msg] {
+      val location = Constants.Endpoints.signup
+      val method   = Method.Post
+      val onSuccess: Response => Msg = response =>
+        response.status match {
+          case Status(201, _) =>
+            SignUpSuccess("Success! Log in now.")
+          case Status(s, _) if s >= 400 && s < 500 =>
+            val json   = response.body
+            val parsed = parse(json).flatMap(json => json.hcursor.get[String]("error"))
+            parsed match {
+              case Left(e)  => SignUpError(s"Error: ${e.getMessage}")
+              case Right(e) => SignUpError(e)
+            }
+        }
+
+      val onError: HttpError => Msg =
+        e => SignUpError(e.toString)
+    }
+  }
+  object Commands {
+    def signup(newUserInfo: NewUserInfo): Cmd[IO, Msg] = {
+      Endpoints.signUp.call(newUserInfo)
+    }
+  }
 }

@@ -4,6 +4,7 @@ import cats.effect.IO
 import com.tamullen.jobsboard.core.Users
 import com.tamullen.jobsboard.domain.user.*
 import com.tamullen.jobsboard.domain.user.Role.*
+import com.tamullen.jobsboard.domain.auth._
 
 trait UsersFixture {
   val mockedUsers: Users[IO] = new Users[IO] {
@@ -19,17 +20,17 @@ trait UsersFixture {
   }
 
   val Travis = User(
-      "travis@test.com",
-      "$2a$10$vQdL/KO4Nf5m26EPOyM9jOeVJwbc3n97QQ7sRmeA/BHe7wJeAwP3W", // tamullen
-      Some("Travis"),
-      Some("Mullen"),
-      Some("tamullen"),
-      Role.ADMIN
-    )
+    "travis@test.com",
+    "$2a$10$vQdL/KO4Nf5m26EPOyM9jOeVJwbc3n97QQ7sRmeA/BHe7wJeAwP3W", // tamullen
+    Some("Travis"),
+    Some("Mullen"),
+    Some("tamullen"),
+    Role.ADMIN
+  )
 
-  val travisEmail = Travis.email
+  val travisEmail    = Travis.email
   val travisPassword = "tamullen"
-  
+
   val Amber = User(
     "amber@test.com",
     "$2a$10$7wVKg4nQ/ZsWUR4XmBy1VOY2rAX0dojNpony6SkerCpeHe/nXkTQq", // amanley
@@ -39,7 +40,7 @@ trait UsersFixture {
     Role.RECRUITER
   )
 
-  val amberEmail = Amber.email
+  val amberEmail    = Amber.email
   val amberPassword = "amanley"
 
   val NewUser = User(
