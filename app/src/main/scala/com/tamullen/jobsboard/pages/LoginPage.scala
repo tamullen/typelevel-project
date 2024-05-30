@@ -35,7 +35,7 @@ case class LoginPage(email: String = "", password: String = "", status: Option[P
     case LoginError(error) =>
       (setErrorStatus(error), Cmd.None)
     case LoginSuccess(token) =>
-      (setSuccessStatus("Success"), Logger.consoleLog[IO](s"I HAZ TOKEN: $token"))
+      (setSuccessStatus("Success!"), Logger.consoleLog[IO](s"I HAZ TOKEN: $token"))
     case _ => (this, Cmd.None)
   }
 
