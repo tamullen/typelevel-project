@@ -8,9 +8,10 @@ import pureconfig.ConfigSource
 import pureconfig.error.ConfigReaderException
 import pureconfig.error.ConfigReaderException
 import org.http4s.ember.server.EmberServerBuilder
-import com.tamullen.jobsboard.config._
-import com.tamullen.jobsboard.config.syntax._
+import com.tamullen.jobsboard.config.*
+import com.tamullen.jobsboard.config.syntax.*
 import com.tamullen.jobsboard.modules.*
+import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 // import com.tamullen.jobsboard.http.routes.JobRoutes
@@ -30,7 +31,7 @@ object Application extends IOApp.Simple {
           .default[IO]
           .withHost(emberConfig.host)
           .withPort(emberConfig.port)
-          .withHttpApp(httpApi.endpoints.orNotFound)
+          .withHttpApp(CORS(httpApi.endpoints.orNotFound)) // TODO remove CORS when deploying
           .build
       } yield server
       appResource.use(_ => IO.println("Testing Routes!") *> IO.never)

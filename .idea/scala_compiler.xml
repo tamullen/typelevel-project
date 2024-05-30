@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="coreJVM,jobsBoard,server,server.jobsBoard,typelevel-project" />
+    <profile name="sbt 1" modules="coreJVM,server,typelevel-project,typelevel-project_7617" />
     <profile name="sbt 2" modules="app">
       <parameters>
         <parameter value="-scalajs" />
