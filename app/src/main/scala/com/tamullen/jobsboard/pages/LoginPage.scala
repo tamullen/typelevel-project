@@ -37,7 +37,7 @@ case class LoginPage(email: String = "", password: String = "", status: Option[P
     case LoginError(error) =>
       (setErrorStatus(error), Cmd.None)
     case LoginSuccess(token) =>
-      (setSuccessStatus("Success!"), Cmd.emit(Session.SetToken(email, token)))
+      (setSuccessStatus("Success!"), Cmd.emit(Session.SetToken(email, token, isNewUser = true)))
     //                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ should be App.Msg,
     //                                      so had each Msg replaced with App.Msg and extended
     //                                      App.Msg in each Msg trait.
