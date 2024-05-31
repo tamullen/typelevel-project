@@ -4,7 +4,9 @@ import cats.effect.IO
 import io.circe.syntax.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
+import com.tamullen.jobsboard.*
 import com.tamullen.jobsboard.common.*
+import com.tamullen.jobsboard.core.Session
 import com.tamullen.jobsboard.domain.auth.*
 import tyrian.*
 import tyrian.Html.*
@@ -21,9 +23,9 @@ import tyrian.http.Method.Post
 case class LoginPage(email: String = "", password: String = "", status: Option[Page.Status] = None)
     extends Page {
   import LoginPage.*
-  override def initCmd: Cmd[IO, Page.Msg] = Cmd.None // TODO
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None // TODO
 
-  override def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email)       => (this.copy(email = email), Cmd.None)
     case UpdatePassword(password) => (this.copy(password = password), Cmd.None)
     case AttemptLogin =>
@@ -35,11 +37,14 @@ case class LoginPage(email: String = "", password: String = "", status: Option[P
     case LoginError(error) =>
       (setErrorStatus(error), Cmd.None)
     case LoginSuccess(token) =>
-      (setSuccessStatus("Success!"), Logger.consoleLog[IO](s"I HAZ TOKEN: $token"))
+      (setSuccessStatus("Success!"), Cmd.emit(Session.SetToken(email, token)))
+    //                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ should be App.Msg,
+    //                                      so had each Msg replaced with App.Msg and extended
+    //                                      App.Msg in each Msg trait.
     case _ => (this, Cmd.None)
   }
 
-  override def view(): Html[Page.Msg] =
+  override def view(): Html[App.Msg] =
     div(`class` := "form-section")(
       // title: Sign up
       div(`class` := "top-section")(
@@ -93,7 +98,7 @@ case class LoginPage(email: String = "", password: String = "", status: Option[P
 }
 
 object LoginPage {
-  trait Msg                               extends Page.Msg
+  trait Msg                               extends App.Msg
   case class UpdateEmail(email: String)   extends Msg
   case class UpdatePassword(pass: String) extends Msg
   // actions

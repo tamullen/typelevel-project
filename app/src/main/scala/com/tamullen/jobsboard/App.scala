@@ -14,9 +14,10 @@ import com.tamullen.jobsboard.components._
 import com.tamullen.jobsboard.pages._
 
 object App {
-  type Msg = Router.Msg | Page.Msg
+//  type Msg = Router.Msg | Session.Msg | App.Msg
+  trait Msg
 
-  case class Model(router: Router, page: Page)
+  case class Model(router: Router, session: Session, page: Page)
 }
 
 @JSExportTopLevel("RockTheJvmApp")
@@ -34,7 +35,9 @@ class App extends TyrianApp[App.Msg, App.Model] {
     val page                        = Page.get(location)
     val pageCmd                     = page.initCmd
     val (router: Router, routerCmd) = Router.startAt(location)
-    (Model(router, page), routerCmd |+| pageCmd)
+    val session                     = Session()
+    val sessionCmd                  = session.initCmd
+    (Model(router, session, page), routerCmd |+| sessionCmd |+| pageCmd)
   }
 
   // potentially endless stream of messages..
@@ -61,8 +64,10 @@ class App extends TyrianApp[App.Msg, App.Model] {
         val newPageCmd = newPage.initCmd
         (model.copy(router = newRouter, page = newPage), routerCmd |+| newPageCmd)
       }
-//      (model.copy(router = newRouter), cmd)
-    case msg: Page.Msg =>
+    case msg: Session.Msg =>
+      val (newSession, cmd) = model.session.update(msg)
+      (model.copy(session = newSession), cmd)
+    case msg: App.Msg =>
       // update the page
       val (newPage, cmd) = model.page.update(msg)
       (model.copy(page = newPage), cmd)

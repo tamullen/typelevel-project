@@ -3,6 +3,7 @@ package com.tamullen.jobsboard.core
 import tyrian.Cmd
 import cats.effect._
 import fs2.dom.History
+import com.tamullen.jobsboard.*
 
 // jobs.rockthejvm.com/login
 //                      ^^ location
@@ -27,7 +28,7 @@ case class Router private (location: String, history: History[IO, String]) {
 }
 
 object Router {
-  trait Msg
+  trait Msg                                                                      extends App.Msg
   case class ChangeLocation(location: String, browserTriggered: Boolean = false) extends Msg
   case class ExternalRedirect(location: String)                                  extends Msg
 

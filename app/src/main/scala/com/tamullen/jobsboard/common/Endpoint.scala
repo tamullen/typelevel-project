@@ -26,5 +26,4 @@ trait Endpoint[M] {
       ),
       Decoder[M](onSuccess, onError)
     )
-
 }

@@ -10,6 +10,7 @@ import tyrian.*
 import tyrian.Html.*
 import tyrian.cmds.Logger
 import tyrian.http.*
+import com.tamullen.jobsboard.*
 
 // form
 /*
@@ -32,9 +33,9 @@ case class SignUpPage(
     status: Option[Page.Status] = None
 ) extends Page {
   import SignUpPage._
-  override def initCmd: Cmd[IO, Page.Msg] = Cmd.None // TODO
+  override def initCmd: Cmd[IO, App.Msg] = Cmd.None // TODO
 
-  override def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg]) = msg match {
+  override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateEmail(email)              => (this.copy(email = email), Cmd.None)
     case UpdatePassword(password)        => (this.copy(password = password), Cmd.None)
     case UpdateConfirmPassword(password) => (this.copy(confirmPassword = password), Cmd.None)
@@ -68,7 +69,7 @@ case class SignUpPage(
     case _ => (this, Cmd.None)
   }
 
-  override def view(): Html[Page.Msg] =
+  override def view(): Html[App.Msg] =
     div(`class` := "form-section")(
       // title: Sign up
       div(`class` := "top-section")(
@@ -135,7 +136,7 @@ case class SignUpPage(
 }
 
 object SignUpPage {
-  trait Msg                                             extends Page.Msg
+  trait Msg                                             extends App.Msg
   case class UpdateEmail(email: String)                 extends Msg
   case class UpdatePassword(pass: String)               extends Msg
   case class UpdateConfirmPassword(confirmPass: String) extends Msg

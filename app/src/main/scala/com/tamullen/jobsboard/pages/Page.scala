@@ -2,6 +2,7 @@ package com.tamullen.jobsboard.pages
 
 import tyrian._
 import cats.effect.IO
+import com.tamullen.jobsboard.*
 
 object Page {
   trait Msg
@@ -36,11 +37,11 @@ object Page {
 abstract class Page {
   // API
   // Send a command upon instantiating.
-  def initCmd: Cmd[IO, Page.Msg]
+  def initCmd: Cmd[IO, App.Msg]
   // update
-  def update(msg: Page.Msg): (Page, Cmd[IO, Page.Msg])
+  def update(msg: App.Msg): (Page, Cmd[IO, App.Msg])
 
-  def view(): Html[Page.Msg]
+  def view(): Html[App.Msg]
 }
 
 // login page
