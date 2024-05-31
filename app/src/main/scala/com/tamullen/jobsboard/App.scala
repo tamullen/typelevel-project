@@ -18,6 +18,7 @@ object App {
   trait Msg
 
   case class Model(router: Router, session: Session, page: Page)
+  case object NoOp extends Msg
 }
 
 @JSExportTopLevel("RockTheJvmApp")

@@ -10,7 +10,7 @@ import tyrian.http.*
 trait Endpoint[M] {
   val location: String
   val method: Method
-  val onSuccess: Response => M
+  val onResponse: Response => M
   val onError: HttpError => M
 
   def call[A: Encoder](payload: A): Cmd[IO, M] =
@@ -39,7 +39,7 @@ trait Endpoint[M] {
         timeout = Request.DefaultTimeOut,
         withCredentials = false
       ),
-      Decoder[M](onSuccess, onError)
+      Decoder[M](onResponse, onError)
     )
 
   private def internalCall(authorization: Option[String]): Cmd[IO, M] =
@@ -55,6 +55,6 @@ trait Endpoint[M] {
         timeout = Request.DefaultTimeOut,
         withCredentials = false
       ),
-      Decoder[M](onSuccess, onError)
+      Decoder[M](onResponse, onError)
     )
 }
