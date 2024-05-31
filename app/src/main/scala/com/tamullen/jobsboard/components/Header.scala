@@ -6,6 +6,7 @@ import com.tamullen.jobsboard.App._
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
 import com.tamullen.jobsboard.pages._
+import com.tamullen.jobsboard.*
 
 object Header {
   // Public API
@@ -14,9 +15,7 @@ object Header {
       renderLogo(),
       div(`class` := "header-nav")(
         ul(`class` := "header-links")(
-          renderNavLink("Jobs", Page.Urls.JOBS),
-          renderNavLink("Login", Page.Urls.LOGIN),
-          renderNavLink("Sign Up", Page.Urls.SIGNUP)
+          renderNavLinks()
         )
       )
     )
@@ -41,7 +40,28 @@ object Header {
       img(`class` := "home-logo", src := logoImage, alt := "RockTheJVM")
     )
 
-  private def renderNavLink(text: String, location: String) = {
+  private def renderNavLinks(): List[Html[App.Msg]] = {
+    val constantLinks = List(renderSimpleNavLink("Jobs", Page.Urls.JOBS))
+    val unauthedLinks = List(
+      renderSimpleNavLink("Login", Page.Urls.LOGIN),
+      renderSimpleNavLink("Sign Up", Page.Urls.SIGNUP)
+    )
+
+    val authedLinks = List(
+      renderNavLink("Log out", Page.Urls.HASH)(_ => Session.Logout)
+    )
+
+    constantLinks ++ (
+      if (Session.isActive) authedLinks
+      else unauthedLinks
+    )
+  }
+
+  private def renderSimpleNavLink(text: String, location: String) = {
+    renderNavLink(text, location)(Router.ChangeLocation(_))
+  }
+
+  private def renderNavLink(text: String, location: String)(location2msg: String => App.Msg) = {
     li(`class` := "nav-item")(
       a(
         href    := location,
@@ -50,11 +70,10 @@ object Header {
           "click",
           e => {
             e.preventDefault() // native JS - prevent reloading the page.
-            Router.ChangeLocation(location)
+            location2msg(location)
           }
         )
       )(text)
     )
   }
-
 }

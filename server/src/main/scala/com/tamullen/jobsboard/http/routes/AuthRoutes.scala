@@ -105,7 +105,7 @@ class AuthRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (
   private val logoutRoute: AuthRoute[F] = { case req @ POST -> Root / "logout" asAuthed _ =>
     val token = req.authenticator
     for {
-      _    <- Logger[F].info(s"Logging out ${token}")
+      _    <- Logger[F].info(s"Logging out ${req.identity.email}")
       _    <- authenticator.discard(token)
       resp <- Ok()
     } yield resp
