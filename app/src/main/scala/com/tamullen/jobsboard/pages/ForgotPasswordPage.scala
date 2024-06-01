@@ -9,7 +9,7 @@ import com.tamullen.jobsboard.common.*
 import com.tamullen.jobsboard.domain.auth.ForgotPasswordInfo
 import io.circe.generic.auto.*
 
-case class ForgotPasswordPage(email: String = "", status: Option[Page.Status] = None)
+final case class ForgotPasswordPage(email: String = "", status: Option[Page.Status] = None)
     extends FormPage("Reset Password", status) {
   import ForgotPasswordPage.*
 
@@ -30,7 +30,8 @@ case class ForgotPasswordPage(email: String = "", status: Option[Page.Status] = 
 
   override protected def renderFormContent(): List[Html[App.Msg]] = List(
     renderInput("Email:", "email", "text", true, UpdateEmail(_)),
-    button(`type` := "button", onClick(AttemptResetPassword))("Send Email")
+    button(`type` := "button", onClick(AttemptResetPassword))("Send Email"),
+    renderAuxLink(Page.Urls.RESET_PASSWORD, "Have a token?")
   )
 
   def setErrorStatus(message: String): Page =

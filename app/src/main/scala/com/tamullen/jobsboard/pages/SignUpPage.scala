@@ -23,7 +23,7 @@ import com.tamullen.jobsboard.*
       - company
     button - trigger a sign up
  */
-case class SignUpPage(
+final case class SignUpPage(
     email: String = "",
     password: String = "",
     confirmPassword: String = "",
@@ -68,7 +68,7 @@ case class SignUpPage(
     case _ => (this, Cmd.None)
   }
 
-  override def renderFormContent(): List[Html[App.Msg]] = List(
+  override protected def renderFormContent(): List[Html[App.Msg]] = List(
     // 6 inputs
     renderInput("Email", "email", "text", true, UpdateEmail(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),

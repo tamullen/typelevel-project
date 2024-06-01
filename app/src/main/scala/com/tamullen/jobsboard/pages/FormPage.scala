@@ -2,9 +2,11 @@ package com.tamullen.jobsboard.pages
 import cats.effect.IO
 import com.tamullen.jobsboard.*
 import com.tamullen.jobsboard.core.Router
+import org.scalajs.dom.*
 import tyrian.*
 import tyrian.Html.*
 import tyrian.http.*
+import scala.concurrent.duration.FiniteDuration
 
 abstract class FormPage(title: String, status: Option[Page.Status]) extends Page {
 
@@ -16,7 +18,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
     renderForm()
 
   override def initCmd: Cmd[IO, App.Msg] =
-    Cmd.None
+    clearForm()
 
   // protected API
   protected def renderAuxLink(location: String, text: String): Html[App.Msg] =
@@ -57,6 +59,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       form(
         name    := "signin",
         `class` := "form",
+        id      := "form",
         onEvent(
           "submit",
           e => {
@@ -69,4 +72,24 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       ),
       status.map(s => div(s.message)).getOrElse(div())
     )
+
+    /*
+      Check if the form has loaded (if it's present on the page)
+        document.getElementById()
+      check again, while the element is null, with a space of 100 millis
+     */
+    // private
+  private def clearForm() = {
+    Cmd.Run[IO, Unit, App.Msg] {
+      // IO effect
+      def effect: IO[Option[HTMLFormElement]] = for {
+        maybeForm <- IO(Option(document.getElementById("form").asInstanceOf[HTMLFormElement]))
+        finalForm <-
+          if (maybeForm.isEmpty) IO.sleep(FiniteDuration(100, millis)) *> effect
+          else IO(maybeForm)
+      } yield finalForm
+
+      effect.map(_.foreach(_.reset()))
+    }(_ => App.NoOp)
+  }
 }

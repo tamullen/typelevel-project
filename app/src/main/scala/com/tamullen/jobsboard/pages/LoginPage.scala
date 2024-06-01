@@ -20,8 +20,11 @@ import tyrian.http.Method.Post
     -button
   status (success or failure)
  */
-case class LoginPage(email: String = "", password: String = "", status: Option[Page.Status] = None)
-    extends FormPage("Log In", status) {
+final case class LoginPage(
+    email: String = "",
+    password: String = "",
+    status: Option[Page.Status] = None
+) extends FormPage("Log In", status) {
   import LoginPage.*
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
@@ -43,7 +46,7 @@ case class LoginPage(email: String = "", password: String = "", status: Option[P
     case _ => (this, Cmd.None)
   }
 
-  override def renderFormContent(): List[Html[App.Msg]] = List(
+  override protected def renderFormContent(): List[Html[App.Msg]] = List(
     renderInput("Email", "email", "text", true, UpdateEmail(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),
     button(`type` := "button", onClick(AttemptLogin))("Log In"),

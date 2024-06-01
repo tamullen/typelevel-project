@@ -5,7 +5,7 @@ import tyrian.*
 import tyrian.Html.*
 import com.tamullen.jobsboard.*
 
-case class JobPage(id: String) extends Page {
+final case class JobPage(id: String) extends Page {
   override def initCmd: Cmd[IO, App.Msg] = Cmd.None // TODO
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = (this, Cmd.None) // TODO
