@@ -22,6 +22,7 @@ object Page {
     val HOME            = "/"
     val HASH            = "#"
     val PROFILE         = "/profile"
+    val POST_JOB        = "/postjob"
   }
 
   import Urls._
@@ -32,6 +33,7 @@ object Page {
     case RESET_PASSWORD            => ResetPasswordPage()
     case `EMPTY` | `HOME` | `JOBS` => JobListPage()
     case `PROFILE`                 => ProfilePage()
+    case POST_JOB                  => PostJobPage()
     case s"/jobs/$id"              => JobPage(id)
     case _                         => NotFoundPage()
   }

@@ -34,6 +34,21 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       )
     )(text)
 
+  protected def renderTextArea(
+      name: String,
+      uid: String,
+      isRequired: Boolean,
+      onChange: String => App.Msg
+  ): Html[App.Msg] = {
+    div(`class` := "form-input")(
+      label(`for` := name, `class` := "form-label")(
+        if (isRequired) span("*") else span(),
+        text(name)
+      ),
+      textarea(`class` := "form-control", id := uid, onInput(onChange))("")
+    )
+  }
+
   protected def renderInput(
       name: String,
       uid: String,
