@@ -48,6 +48,7 @@ object Header {
     )
 
     val authedLinks = List(
+      renderSimpleNavLink("Profile", Page.Urls.PROFILE),
       renderNavLink("Log out", Page.Urls.HASH)(_ => Session.Logout)
     )
 

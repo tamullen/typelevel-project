@@ -14,7 +14,6 @@ import com.tamullen.jobsboard.modules.*
 import org.http4s.server.middleware.CORS
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-// import com.tamullen.jobsboard.http.routes.JobRoutes
 
 object Application extends IOApp.Simple {
 //  val configSource = ConfigSource.default.load[EmberConfig]

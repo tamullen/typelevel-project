@@ -117,9 +117,9 @@ object SignUpPage {
 
   object Endpoints {
     val signUp = new Endpoint[Msg] {
-      val location = Constants.endpoints.signup
-      val method   = Method.Post
-      val onResponse: Response => Msg = response =>
+      override val location = Constants.endpoints.signup
+      override val method   = Method.Post
+      override val onResponse: Response => Msg = response =>
         response.status match {
           case Status(201, _) =>
             SignUpSuccess("Success! Log in now.")
@@ -130,9 +130,10 @@ object SignUpPage {
               case Left(e)  => SignUpError(s"Error: ${e.getMessage}")
               case Right(e) => SignUpError(e)
             }
+          case _ => SignUpError("Some unknown reply from the server.")
         }
 
-      val onError: HttpError => Msg =
+      override val onError: HttpError => Msg =
         e => SignUpError(e.toString)
     }
   }

@@ -85,7 +85,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       def effect: IO[Option[HTMLFormElement]] = for {
         maybeForm <- IO(Option(document.getElementById("form").asInstanceOf[HTMLFormElement]))
         finalForm <-
-          if (maybeForm.isEmpty) IO.sleep(FiniteDuration(100, millis)) *> effect
+          if (maybeForm.isEmpty) IO.sleep(FiniteDuration(100, "millis")) *> effect
           else IO(maybeForm)
       } yield finalForm
 
