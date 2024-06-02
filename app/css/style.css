@@ -28,3 +28,28 @@
 .aux-link {
     display: block;
 }
+
+.jobs-container {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.job-card {
+    display: flex;
+    align-items: center;
+    border: 1px solid gray;
+    border-radius: 20px;
+    margin: 10px;
+    padding: 20px;
+}
+
+.job-logo {
+    width: 100px;
+    height: 100px;
+}
+
+.load-more-action {
+    align-self: center;
+}
+
