@@ -27,14 +27,13 @@ import com.tamullen.jobsboard.http.routes.AuthRoutes
 import org.typelevel.log4cats.Logger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 
-
 class JobRoutesSpec
-  extends AsyncFreeSpec
-  with AsyncIOSpec
-  with Matchers
-  with Http4sDsl[IO]
-  with JobFixture
-  with SecuredRouteFixture {
+    extends AsyncFreeSpec
+    with AsyncIOSpec
+    with Matchers
+    with Http4sDsl[IO]
+    with JobFixture
+    with SecuredRouteFixture {
 
   ///////////////////////////////////////////////////////////////////////
   // Prep
@@ -66,11 +65,18 @@ class JobRoutesSpec
     override def delete(id: UUID): IO[Int] =
       if (id == AwesomeJobUuid) IO.pure(1)
       else IO.pure(0)
+
+    override def possibleFilters(): IO[JobFilter] = IO(
+      defaultFilter
+    )
   }
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
   // this is what is being tested.
   val jobRoutes: HttpRoutes[IO] = JobRoutes[IO](jobs).routes
+  val defaultFilter: JobFilter = JobFilter(
+    companies = List("Awesome Company")
+  )
 
   ///////////////////////////////////////////////////////////////////////
   // Tests
@@ -203,6 +209,17 @@ class JobRoutesSpec
         // make some assertions
       } yield {
         response.status shouldBe Status.Unauthorized
+      }
+    }
+
+    "should surface all possible filters" in {
+      for {
+        response <- jobRoutes.orNotFound.run(
+          Request(method = Method.GET, uri = uri"/jobs/filters")
+        )
+        filter <- response.as[JobFilter]
+      } yield {
+        filter shouldBe defaultFilter
       }
     }
   }

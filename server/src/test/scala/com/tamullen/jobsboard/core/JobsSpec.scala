@@ -19,12 +19,12 @@ import com.tamullen.jobsboard.http.validation._
 import com.tamullen.jobsboard.http.validation.syntax.*
 
 class JobsSpec
-  extends AsyncFreeSpec
-  with AsyncIOSpec
-  with Matchers
-  with DoobieSpec
-  with JobFixture {
-  val initScript: String = "sql/jobs.sql"
+    extends AsyncFreeSpec
+    with AsyncIOSpec
+    with Matchers
+    with DoobieSpec
+    with JobFixture {
+  val initScript: String        = "sql/jobs.sql"
   given pages: PaginationConfig = new PaginationConfig()
 
   given logger: Logger[IO] = Slf4jLogger.getLogger[IO]
@@ -32,7 +32,7 @@ class JobsSpec
     "should return no job if the given UUID does not exist" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs      <- LiveJobs[IO](xa)
           retrieved <- jobs.find(NotFoundJobUuid)
         } yield retrieved
 
@@ -43,7 +43,7 @@ class JobsSpec
     "should retrieve a job by id" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs      <- LiveJobs[IO](xa)
           retrieved <- jobs.find(AwesomeJobUuid)
         } yield retrieved
 
@@ -54,7 +54,7 @@ class JobsSpec
     "should retrieve all jobs" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs      <- LiveJobs[IO](xa)
           retrieved <- jobs.all()
         } yield retrieved
 
@@ -65,8 +65,8 @@ class JobsSpec
     "should create a new job" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
-          jobId <- jobs.create("travis@tamullen.com", RockTheJvmNewJob)
+          jobs     <- LiveJobs[IO](xa)
+          jobId    <- jobs.create("travis@tamullen.com", RockTheJvmNewJob)
           maybeJob <- jobs.find(jobId)
         } yield maybeJob
 
@@ -77,7 +77,7 @@ class JobsSpec
     "should return an updated job if it exists" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs            <- LiveJobs[IO](xa)
           maybeUpdatedJob <- jobs.update(AwesomeJobUuid, UpdatedAwesomeJob.jobInfo)
         } yield maybeUpdatedJob
 
@@ -88,7 +88,7 @@ class JobsSpec
     "should return None when trying to update a job that does not exist" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs            <- LiveJobs[IO](xa)
           maybeUpdatedJob <- jobs.update(NotFoundJobUuid, UpdatedAwesomeJob.jobInfo)
         } yield maybeUpdatedJob
 
@@ -99,15 +99,17 @@ class JobsSpec
     "should delete an existing job" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs                <- LiveJobs[IO](xa)
           numberOfDeletedJobs <- jobs.delete(AwesomeJobUuid)
-          countOfJobs <- sql"SELECT COUNT(*) FROM jobs WHERE id = $AwesomeJobUuid".query[Int].unique.transact(xa)
+          countOfJobs <- sql"SELECT COUNT(*) FROM jobs WHERE id = $AwesomeJobUuid"
+            .query[Int]
+            .unique
+            .transact(xa)
         } yield (numberOfDeletedJobs, countOfJobs)
 
-        program.asserting {
-          case (numberOfDeletedJobs, countOfJobs) =>
-            numberOfDeletedJobs shouldBe 1
-            countOfJobs shouldBe 0
+        program.asserting { case (numberOfDeletedJobs, countOfJobs) =>
+          numberOfDeletedJobs shouldBe 1
+          countOfJobs shouldBe 0
         }
       }
     }
@@ -115,19 +117,22 @@ class JobsSpec
     "should return zero updated rows if the job id to delete is not found" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs                <- LiveJobs[IO](xa)
           numberOfDeletedJobs <- jobs.delete(NotFoundJobUuid)
-          countOfJobs <- sql"SELECT COUNT(*) FROM jobs WHERE id = $AwesomeJobUuid".query[Int].unique.transact(xa)
+          countOfJobs <- sql"SELECT COUNT(*) FROM jobs WHERE id = $AwesomeJobUuid"
+            .query[Int]
+            .unique
+            .transact(xa)
         } yield numberOfDeletedJobs
 
-        program.asserting (_ shouldBe 0)
+        program.asserting(_ shouldBe 0)
       }
     }
 
     "should filter remote jobs" in {
       transactor.use { xa =>
         val program = for {
-          jobs <- LiveJobs[IO](xa)
+          jobs         <- LiveJobs[IO](xa)
           filteredJobs <- jobs.all(JobFilter(remote = true), Pagination.default)
         } yield filteredJobs
 
@@ -141,10 +146,31 @@ class JobsSpec
           jobs <- LiveJobs[IO](xa)
           filteredJobs <- jobs.all(
             JobFilter(tags = List("scala", "cats", "zio")),
-            Pagination.default)
+            Pagination.default
+          )
         } yield filteredJobs
 
         program.asserting(_ shouldBe List(AwesomeJob))
+      }
+    }
+
+    "Should surface a comprehensive filter out of all jobs container" in {
+      transactor.use { xa =>
+        val program = for {
+          jobs   <- LiveJobs[IO](xa)
+          filter <- jobs.possibleFilters()
+        } yield filter
+
+        program.asserting {
+          case JobFilter(companies, locations, countries, seniorities, tags, maxSalary, remote) =>
+            companies shouldBe List("Awesome Company")
+            locations shouldBe List("Berlin")
+            countries shouldBe List("Germany")
+            seniorities shouldBe List("Senior")
+            tags.toSet shouldBe Set("scala", "scala-3", "cats")
+            maxSalary shouldBe Some(3000)
+
+        }
       }
     }
   }
