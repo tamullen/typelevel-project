@@ -30,6 +30,7 @@
 }
 
 .jobs-container {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -49,7 +50,18 @@
     height: 100px;
 }
 
+.job-list-page {
+    display: flex;
+}
+
 .load-more-action {
     align-self: center;
+}
+
+.filter-panel-container {
+    margin: 10px;
+    padding: 10px;
+    border: 1px solid pink;
+    border-radius: 20px;
 }
 
