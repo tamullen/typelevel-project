@@ -6,6 +6,7 @@ import tyrian.Html.*
 import tyrian.http.*
 import com.tamullen.jobsboard.*
 import com.tamullen.jobsboard.common.*
+import com.tamullen.jobsboard.components.*
 import com.tamullen.jobsboard.domain.auth.ForgotPasswordInfo
 import io.circe.generic.auto.*
 
@@ -31,7 +32,7 @@ final case class ForgotPasswordPage(email: String = "", status: Option[Page.Stat
   override protected def renderFormContent(): List[Html[App.Msg]] = List(
     renderInput("Email:", "email", "text", true, UpdateEmail(_)),
     button(`type` := "button", onClick(AttemptResetPassword))("Send Email"),
-    renderAuxLink(Page.Urls.RESET_PASSWORD, "Have a token?")
+    Anchors.renderSimpleNavLink("Have a token?", Page.Urls.RESET_PASSWORD)
   )
 
   def setErrorStatus(message: String): Page =

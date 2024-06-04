@@ -13,6 +13,7 @@ import tyrian.Html.*
 import tyrian.cmds.Logger
 import tyrian.http.*
 import tyrian.http.Method.Post
+import com.tamullen.jobsboard.components.*
 /*
   form
     -email
@@ -50,7 +51,7 @@ final case class LoginPage(
     renderInput("Email", "email", "text", true, UpdateEmail(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),
     button(`type` := "button", onClick(AttemptLogin))("Log In"),
-    renderAuxLink(Page.Urls.FORGOT_PASSWORD, "Forgot Password?")
+    Anchors.renderSimpleNavLink("Forgot Password?", Page.Urls.FORGOT_PASSWORD)
   )
 
   /////////////////////////////////////////////////////////////////////////////////////

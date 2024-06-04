@@ -20,19 +20,19 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
   override def initCmd: Cmd[IO, App.Msg] =
     clearForm()
 
-  // protected API
-  protected def renderAuxLink(location: String, text: String): Html[App.Msg] =
-    a(
-      href    := location,
-      `class` := "aux-link",
-      onEvent(
-        "click",
-        e => {
-          e.preventDefault() // native JS - prevent reloading the page.
-          Router.ChangeLocation(location)
-        }
-      )
-    )(text)
+//  // protected API
+//  protected def renderAuxLink(location: String, text: String): Html[App.Msg] =
+//    a(
+//      href    := location,
+//      `class` := "aux-link",
+//      onEvent(
+//        "click",
+//        e => {
+//          e.preventDefault() // native JS - prevent reloading the page.
+//          Router.ChangeLocation(location)
+//        }
+//      )
+//    )(text)
 
   protected def renderTextArea(
       name: String,

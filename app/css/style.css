@@ -65,3 +65,9 @@
     border-radius: 20px;
 }
 
+.job-hero {
+    display: flex;
+    align-items: center;
+    margin: 20px;
+}
+

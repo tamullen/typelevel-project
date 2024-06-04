@@ -1,12 +1,15 @@
 package com.tamullen.jobsboard.components
 import tyrian._
 import tyrian.Html._
-import com.tamullen.jobsboard.core._
-import com.tamullen.jobsboard.App._
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation._
+
 import com.tamullen.jobsboard.pages._
+import com.tamullen.jobsboard.core._
+import com.tamullen.jobsboard.App._
 import com.tamullen.jobsboard.*
+import com.tamullen.jobsboard.components.*
 
 object Header {
   // Public API
@@ -42,18 +45,18 @@ object Header {
 
   private def renderNavLinks(): List[Html[App.Msg]] = {
     val constantLinks = List(
-      renderSimpleNavLink("Jobs", Page.Urls.JOBS),
-      renderSimpleNavLink("Post Job", Page.Urls.POST_JOB)
+      Anchors.renderSimpleNavLink("Jobs", Page.Urls.JOBS),
+      Anchors.renderSimpleNavLink("Post Job", Page.Urls.POST_JOB)
     )
 
     val unauthedLinks = List(
-      renderSimpleNavLink("Login", Page.Urls.LOGIN),
-      renderSimpleNavLink("Sign Up", Page.Urls.SIGNUP)
+      Anchors.renderSimpleNavLink("Login", Page.Urls.LOGIN),
+      Anchors.renderSimpleNavLink("Sign Up", Page.Urls.SIGNUP)
     )
 
     val authedLinks = List(
-      renderSimpleNavLink("Profile", Page.Urls.PROFILE),
-      renderNavLink("Log out", Page.Urls.HASH)(_ => Session.Logout)
+      Anchors.renderSimpleNavLink("Profile", Page.Urls.PROFILE),
+      Anchors.renderNavLink("Log out", Page.Urls.HASH)(_ => Session.Logout)
     )
 
     constantLinks ++ (
@@ -62,23 +65,4 @@ object Header {
     )
   }
 
-  private def renderSimpleNavLink(text: String, location: String) = {
-    renderNavLink(text, location)(Router.ChangeLocation(_))
-  }
-
-  private def renderNavLink(text: String, location: String)(location2msg: String => App.Msg) = {
-    li(`class` := "nav-item")(
-      a(
-        href    := location,
-        `class` := "nav-link",
-        onEvent(
-          "click",
-          e => {
-            e.preventDefault() // native JS - prevent reloading the page.
-            location2msg(location)
-          }
-        )
-      )(text)
-    )
-  }
 }

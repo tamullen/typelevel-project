@@ -9,6 +9,7 @@ import io.circe.generic.auto.*
 import com.tamullen.jobsboard.*
 import com.tamullen.jobsboard.common.*
 import com.tamullen.jobsboard.domain.auth.RecoverPasswordInfo
+import com.tamullen.jobsboard.components.*
 import tyrian.http.{HttpError, Method, Response}
 
 // email, token, new password + button
@@ -51,7 +52,7 @@ final case class ResetPasswordPage(
     renderInput("Token", "token", "text", true, UpdateToken(_)),
     renderInput("Password", "password", "password", true, UpdatePassword(_)),
     button(`type` := "button", onClick(AttemptResetPassword))("Set Password"),
-    renderAuxLink(Page.Urls.FORGOT_PASSWORD, "Don't have a token yet?")
+    Anchors.renderSimpleNavLink("Don't have a token yet?", Page.Urls.FORGOT_PASSWORD)
   )
 
   // util
