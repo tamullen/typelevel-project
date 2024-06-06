@@ -7,6 +7,7 @@ import tyrian.*
 import tyrian.Html.*
 import tyrian.http.*
 import scala.concurrent.duration.FiniteDuration
+import com.tamullen.jobsboard.common.Constants
 
 abstract class FormPage(title: String, status: Option[Page.Status]) extends Page {
 
@@ -56,12 +57,16 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
       isRequired: Boolean,
       onChange: String => App.Msg
   ) =
-    div(`class` := "form-input")(
-      label(`for` := name, `class` := "form-label")(
-        if (isRequired) span("*") else span(),
-        text(name)
-      ),
-      input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange))
+    div(`class` := "row")(
+      div(`class` := "col-md-12")(
+        div(`class` := "form-input")(
+          label(`for` := uid, `class` := "form-label")(
+            if (isRequired) span("*") else span(),
+            text(name)
+          ),
+          input(`type` := kind, `class` := "form-control", id := uid, onInput(onChange))
+        )
+      )
     )
 
   protected def renderImageUploadInput(
@@ -99,27 +104,36 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
     )
 
   protected def renderForm(): Html[App.Msg] =
-    div(`class` := "form-section")(
+    div(`class` := "row")(
       // title: Sign up
-      div(`class` := "top-section")(
-        h1(title)
-      ),
-      // form
-      form(
-        name    := "signin",
-        `class` := "form",
-        id      := "form",
-        onEvent(
-          "submit",
-          e => {
-            e.preventDefault()
-            App.NoOp
-          }
+      div(`class` := "col-md-5 p-0")(
+        div(`class` := "logo")(
+          img(src   := Constants.logoImage)
         )
-      )(
-        renderFormContent()
       ),
-      status.map(s => div(s.message)).getOrElse(div())
+      div(`class` := "col-md-7")(
+        div(`class` := "form-section")(
+          div(`class` := "top-section")(
+            h1(span(title)),
+            maybeRenderErrors()
+          ),
+          // form
+          form(
+            name    := title,
+            `class` := "form",
+            id      := "form",
+            onEvent(
+              "submit",
+              e => {
+                e.preventDefault()
+                App.NoOp
+              }
+            )
+          )(
+            renderFormContent()
+          )
+        )
+      )
     )
 
     /*
@@ -127,7 +141,12 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
         document.getElementById()
       check again, while the element is null, with a space of 100 millis
      */
-    // private
+
+  // UI
+  private def maybeRenderErrors() =
+    status.map(s => div(s.message)).getOrElse(div())
+
+  // private
   private def clearForm() = {
     Cmd.Run[IO, Unit, App.Msg] {
       // IO effect
