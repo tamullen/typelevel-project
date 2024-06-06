@@ -39,7 +39,7 @@ case class FilterPanel(
       val newGroups = selectedFilters + (groupName -> newGroup)
       (
         this.copy(selectedFilters = newGroups, dirty = true),
-        Logger.consoleLog[IO](s"Filters: $newGroups. Dirty: $dirty")
+        Logger.consoleLog[IO](s"Filters: $newGroups. Dirty: ${!dirty}")
       )
     case UpdateRemote(remote) =>
       (this.copy(remote = remote, dirty = true), Cmd.None)
@@ -59,16 +59,44 @@ case class FilterPanel(
     Remote __
    */
   override def view(): Html[App.Msg] =
-    div(`class` := "filter-panel-container")(
-      maybeRenderError(),
-      renderSalaryFilter(),
-      renderRemoteCheckbox(),
-      renderCheckBoxGroup("Companies", possibleFilters.companies),
-      renderCheckBoxGroup("Locations", possibleFilters.locations),
-      renderCheckBoxGroup("Countries", possibleFilters.countries),
-      renderCheckBoxGroup("Tags", possibleFilters.tags),
-      renderCheckBoxGroup("Seniorities", possibleFilters.seniorities),
-      renderApplyFiltersButton()
+    div(`class` := "accordion accordion-flush", id := "accordionFlushExample")(
+      div(`class` := "accordion-item")(
+        h2(`class` := "accordion-header", id := "flush-headingOne")(
+          button(
+            `class` := "accordion-button",
+            id      := "accordion-search-filter",
+            `type`  := "button",
+            attribute("data-bs-toggle", "collapse"),
+            attribute("data-bs-target", "#flush-collapseOne"),
+            attribute("aria-expanded", "true"),
+            attribute("aria-controls", "flush-collapseOne")
+          )(
+            div(`class` := "jvm-recent-jobs-accordion-body-heading")(
+              h3(span("Search"), text(" Filters"))
+            )
+          )
+        ),
+        div(
+          `class` := "accordion-collapse collapse show",
+          id      := "flush-collapseOne",
+          attribute("aria-labelledby", "flush-headingOne"),
+          attribute("data-bs-parent", "#accordionFlushExample")
+        )(
+          div(`class` := "accordion-body p-0")(
+            div(`class` := "filter-panel-container")(
+              maybeRenderError(),
+              renderSalaryFilter(),
+              renderRemoteCheckbox(),
+              renderCheckBoxGroup("Companies", possibleFilters.companies),
+              renderCheckBoxGroup("Locations", possibleFilters.locations),
+              renderCheckBoxGroup("Countries", possibleFilters.countries),
+              renderCheckBoxGroup("Tags", possibleFilters.tags),
+              renderCheckBoxGroup("Seniorities", possibleFilters.seniorities),
+              renderApplyFiltersButton()
+            )
+          )
+        )
+      )
     )
 
   // private
@@ -79,10 +107,36 @@ case class FilterPanel(
       }
       .getOrElse(div())
 
+  private def renderFilterGroup(groupName: String, contents: Html[App.Msg]) =
+    div(`class` := "accordion-item")(
+      h2(`class` := "accordion-header", id := s"heading$groupName")(
+        button(
+          `class` := "accordion-button collapsed",
+          `type`  := "button",
+          attribute("data-bs-toggle", "collapse"),
+          attribute("data-bs-target", s"#collapse$groupName"),
+          attribute("aria-expanded", "false"),
+          attribute("aria-controls", s"collapse$groupName")
+        )(
+          groupName
+        )
+      ),
+      div(
+        `class` := "accordion-collapse collapse",
+        id      := s"collapse$groupName",
+        attribute("aria-labelledby", "headingOne"),
+        attribute("data-bs-parent", "#accordionExample")
+      )(
+        div(`class` := "accordion-body")(
+          contents // <--- inject things here
+        )
+      )
+    )
+
   private def renderSalaryFilter() =
-    div(`class` := "filter-group")(
-      h6(`class` := "filter-group-header")("Salary"),
-      div(`class` := "filter-group-content")(
+    renderFilterGroup(
+      "Salary",
+      div(`class` := "mb-3")(
         label(`for` := "filter-salary")("Min (in local currency)"),
         input(
           `type` := "number",
@@ -93,38 +147,43 @@ case class FilterPanel(
     )
 
   private def renderRemoteCheckbox() =
-    div(`class` := "filter-group-content")(
-      label(`for` := s"filter-checkbox")("Remote"),
-      input(
-        `type` := "checkbox",
-        id     := s"filter-checkbox",
-        checked(remote),
-        onEvent(
-          "change",
-          event => {
-            // send message to insert value as a checked value inside the groupName's Set in the map
-            val checkbox = event.target.asInstanceOf[HTMLInputElement]
-            UpdateRemote(checkbox.checked)
-          }
+    renderFilterGroup(
+      "Remote",
+      div(`class` := "form-check")(
+        label(`class` := "form-check-label", `for` := s"filter-checkbox")("Remote"),
+        input(
+          `class` := "form-check-input",
+          `type`  := "checkbox",
+          id      := "filter-checkbox",
+          checked(remote),
+          onEvent(
+            "change",
+            event => {
+              // send message to insert value as a checked value inside the groupName's Set in the map
+              val checkbox = event.target.asInstanceOf[HTMLInputElement]
+              UpdateRemote(checkbox.checked)
+            }
+          )
         )
       )
     )
 
   private def renderCheckBoxGroup(groupName: String, possibleValues: List[String]) =
     val selectedValues = selectedFilters.get(groupName).getOrElse(Set())
-    div(`class` := "filter-group")(
-      h6(`class` := "filter-group-header")(groupName),
-      div(`class` := "filter-group-content")(
+    renderFilterGroup(
+      groupName,
+      div(`class` := "mb-3")(
         possibleValues.map(value => renderCheckbox(groupName, value, selectedValues))
       )
     )
 
   private def renderCheckbox(groupName: String, value: String, selectedValues: Set[String]) =
-    div(`class` := "filter-group-content")(
-      label(`for` := s"filter-$groupName-$value")(value),
+    div(`class` := "form-check")(
+      label(`class` := "form-check-label", `for` := s"filter-$groupName-$value")(value),
       input(
-        `type` := "checkbox",
-        id     := s"filter-$groupName-$value",
+        `class` := "form-check-input",
+        `type`  := "checkbox",
+        id      := s"filter-$groupName-$value",
         checked(selectedValues.contains(value)),
         onEvent(
           "change",
@@ -138,11 +197,14 @@ case class FilterPanel(
     )
 
   private def renderApplyFiltersButton() =
-    button(
-      `type` := "button",
-      disabled(!dirty),
-      onClick(TriggerFilter)
-    )("Apply Filters")
+    div(`class` := "jvm-accordion-search-btn")(
+      button(
+        `class` := "btn btn-primary",
+        `type`  := "button",
+        disabled(!dirty),
+        onClick(TriggerFilter)
+      )("Apply Filters")
+    )
 }
 
 object FilterPanel {
