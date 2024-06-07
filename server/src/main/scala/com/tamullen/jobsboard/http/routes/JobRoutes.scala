@@ -33,7 +33,7 @@ import com.tamullen.jobsboard.domain.user.User
 //import scala.language.implicitConversions
 //import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
-class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F])
+class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F], stripe: Stripe[F])
     extends HttpValidationDsl[F] {
 //  given Pages: PaginationConfig =
 //    new PaginationConfig
@@ -71,7 +71,7 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
   // checked at compile time - increase compile time
   // lowers Developer Experience
 
-  // POST /jobs { jobInfo }
+  // POST /jobs/create { jobInfo }
   private val createJobRoute: AuthRoute[F] = { case req @ POST -> Root / "create" asAuthed user =>
     req.request.validate[JobInfo] { jobInfo =>
       for {
@@ -82,6 +82,20 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
         resp  <- Created(jobId)
       } yield resp
     }
+  }
+
+  // Stripe Endpoints.
+  // POST /jobs/promoted
+  private val promotedJobRoute: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "promoted" =>
+      req.validate[JobInfo] { jobInfo =>
+        for {
+          jobId   <- jobs.create("TODO@rockthejvm.com", jobInfo)
+          _       <- Logger[F].info(s"Created Job: $jobId")
+          session <- stripe.createCheckoutSession(jobId.toString, "TODO@rockthejvm.com")
+          resp    <- session.map(sesh => Ok(sesh.getUrl())).getOrElse(NotFound())
+        } yield resp
+      }
   }
 
   // PUT /jobs/uuid { jobInfo }
@@ -125,12 +139,13 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
       deleteJobRoute.restrictedTo(allRoles)
   )
 
-  val unauthedRoutes = allJobsRoute <+> allFiltersRoute <+> findJobRoute
+  val unauthedRoutes = allJobsRoute <+> allFiltersRoute <+> findJobRoute <+> promotedJobRoute
   val routes = Router(
     "/jobs" -> (unauthedRoutes <+> authedRoutes)
   )
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger: SecuredHandler](jobs: Jobs[F]) = new JobRoutes[F](jobs)
+  def apply[F[_]: Concurrent: Logger: SecuredHandler](jobs: Jobs[F], stripe: Stripe[F]) =
+    new JobRoutes[F](jobs, stripe)
 }

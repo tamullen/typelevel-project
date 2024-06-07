@@ -15,8 +15,10 @@ object validators {
 
   sealed trait ValidationFailure(val errorMessage: String)
   case class EmptyField(fieldName: String) extends ValidationFailure(s"'$fieldName' is empty")
-  case class InvalidUrl(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid URL")
-  case class InvalidEmail(fieldName: String) extends ValidationFailure(s"'$fieldName' is not a valid email")
+  case class InvalidUrl(fieldName: String)
+      extends ValidationFailure(s"'$fieldName' is not a valid URL")
+  case class InvalidEmail(fieldName: String)
+      extends ValidationFailure(s"'$fieldName' is not a valid email")
   // empty field, invalid URL, invalid email...
 
   // conditions
@@ -29,7 +31,9 @@ object validators {
     def validate(value: A): ValidationResult[A]
   }
 
-  def validateRequired[A](field: A, fieldName: String)(required: A => Boolean): ValidationResult[A] = {
+  def validateRequired[A](field: A, fieldName: String)(
+      required: A => Boolean
+  ): ValidationResult[A] = {
     if (required(field)) field.validNel
     else EmptyField(fieldName).invalidNel
   }
@@ -46,11 +50,10 @@ object validators {
     else InvalidEmail(fieldName).invalidNel
   }
 
-
   given jobInfoValidator: Validator[JobInfo] = (jobInfo: JobInfo) => {
     val JobInfo(
-      company,  // should not be empty
-      title, // should not be empty
+      company,     // should not be empty
+      title,       // should not be empty
       description, // should not be empty
       externalUrl, // should not be empty. Should be a valid URL
       remote,
@@ -65,37 +68,37 @@ object validators {
       other
     ) = jobInfo
 
-    val validCompany = validateRequired(company, "company")(_.nonEmpty)
-    val validTitle = validateRequired(title, "title")(_.nonEmpty)
+    val validCompany     = validateRequired(company, "company")(_.nonEmpty)
+    val validTitle       = validateRequired(title, "title")(_.nonEmpty)
     val validDescription = validateRequired(description, "description")(_.nonEmpty)
     val validExternalUrl = validateUrl(externalUrl, "External URL")
-    val validLocation = validateRequired(location, "location")(_.nonEmpty)
+    val validLocation    = validateRequired(location, "location")(_.nonEmpty)
 
     (
-      validCompany, // company
-      validTitle, // title
-      validDescription, //  description
-      validExternalUrl, // externalUrl
-      remote.validNel, // remote,
-      validLocation, // location,
-      salaryLo.validNel, // salaryLo,
-      salaryHi.validNel, // salaryHi,
-      currency.validNel, // currency,
-      country.validNel, // country,
-      tags.validNel, // tags,
-      image.validNel, // image,
+      validCompany,       // company
+      validTitle,         // title
+      validDescription,   //  description
+      validExternalUrl,   // externalUrl
+      remote.validNel,    // remote,
+      validLocation,      // location,
+      salaryLo.validNel,  // salaryLo,
+      salaryHi.validNel,  // salaryHi,
+      currency.validNel,  // currency,
+      country.validNel,   // country,
+      tags.validNel,      // tags,
+      image.validNel,     // image,
       seniority.validNel, // seniority,
-      other.validNel // other
+      other.validNel      // other
     ).mapN(JobInfo.apply) // ValidatedNel[ValidationFailure, JobInfo]
   }
 
   // create validators for
-    // loginInfo
-    // newUserInfo
-    // newPassword info.
+  // loginInfo
+  // newUserInfo
+  // newPassword info.
   given loginInfoValidator: Validator[LoginInfo] = (loginInfo: LoginInfo) => {
     val validUserEmail = validateRequired(loginInfo.email, "email")(_.nonEmpty)
-      .andThen( e => validateEmail(e, "email"))
+      .andThen(e => validateEmail(e, "email"))
 
     val validUserpassword = validateRequired(loginInfo.password, "password")(_.nonEmpty)
     (validUserEmail, validUserpassword).mapN(LoginInfo.apply)
@@ -118,17 +121,17 @@ object validators {
   }
 
   // newPasswordInfo
-  given newPasswordInfoValidator: Validator[NewPasswordInfo] = (newPasswordInfo: NewPasswordInfo) => {
-    val validOldPassword = validateRequired(newPasswordInfo.oldPassword, "old password")(_.nonEmpty)
-    val validNewPassword = validateRequired(newPasswordInfo.newPassword, "new password")(_.nonEmpty)
-    //  ^^ you can run password validation logic here
-    (
-      validOldPassword,
-      validNewPassword
-    ).mapN(NewPasswordInfo.apply)
-  }
-
+  given newPasswordInfoValidator: Validator[NewPasswordInfo] = (newPasswordInfo: NewPasswordInfo) =>
+    {
+      val validOldPassword =
+        validateRequired(newPasswordInfo.oldPassword, "old password")(_.nonEmpty)
+      val validNewPassword =
+        validateRequired(newPasswordInfo.newPassword, "new password")(_.nonEmpty)
+      //  ^^ you can run password validation logic here
+      (
+        validOldPassword,
+        validNewPassword
+      ).mapN(NewPasswordInfo.apply)
+    }
 
 }
-
-

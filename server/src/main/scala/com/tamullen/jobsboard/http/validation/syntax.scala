@@ -23,11 +23,12 @@ object syntax {
   def validateEntity[A](entity: A)(using validator: Validator[A]): ValidationResult[A] =
     validator.validate(entity)
 
-  trait HttpValidationDsl[F[_] : MonadThrow : Logger] extends  Http4sDsl[F] {
+  trait HttpValidationDsl[F[_]: MonadThrow: Logger] extends Http4sDsl[F] {
 
     extension (req: Request[F])
-      def validate[A: Validator](serverLogicIfValid: A => F[Response[F]])
-                                (using entityDecoder: EntityDecoder[F, A]): F[Response[F]] =
+      def validate[A: Validator](
+          serverLogicIfValid: A => F[Response[F]]
+      )(using entityDecoder: EntityDecoder[F, A]): F[Response[F]] =
         req
           .as[A]
           .logError(e => s"Parsing payload failed: ${e}")
@@ -37,7 +38,7 @@ object syntax {
               serverLogicIfValid(entity)
             case Invalid(errors) =>
               // required adding HttpValidationDsl above.
-              BadRequest(FailureResponse(errors.toList.map(_.errorMessage).mkString(",")))
+              BadRequest(FailureResponse(errors.toList.map(_.errorMessage).mkString(", ")))
           }
   }
 }
