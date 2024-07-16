@@ -13,6 +13,7 @@ import org.http4s.dsl.*
 import org.http4s.dsl.impl.*
 import org.http4s.server.Router
 import org.typelevel.log4cats.Logger
+import org.typelevel.ci.CIStringSyntax
 
 import scala.collection.mutable
 import scala.collection.mutable.Map
@@ -33,7 +34,7 @@ import com.tamullen.jobsboard.domain.user.User
 //import scala.language.implicitConversions
 //import com.tamullen.jobsboard.domain.pagination.Pagination.Pages
 
-class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F])
+class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F], stripe: Stripe[F])
     extends HttpValidationDsl[F] {
 //  given Pages: PaginationConfig =
 //    new PaginationConfig
@@ -71,7 +72,7 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
   // checked at compile time - increase compile time
   // lowers Developer Experience
 
-  // POST /jobs { jobInfo }
+  // POST /jobs/create { jobInfo }
   private val createJobRoute: AuthRoute[F] = { case req @ POST -> Root / "create" asAuthed user =>
     req.request.validate[JobInfo] { jobInfo =>
       for {
@@ -82,6 +83,44 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
         resp  <- Created(jobId)
       } yield resp
     }
+  }
+
+  // Stripe Endpoints.
+  // POST /jobs/promoted
+  private val promotedJobRoute: AuthRoute[F] = {
+    case req @ POST -> Root / "promoted" asAuthed user =>
+      req.request.validate[JobInfo] { jobInfo =>
+        for {
+          jobId <- jobs.create(user.email, jobInfo)
+          _ <- Logger[F].info(
+            s"Created Job: $jobId"
+          )
+          session <- stripe.createCheckoutSession(jobId.toString, user.email)
+          resp    <- session.map(sesh => Ok(sesh.getUrl())).getOrElse(NotFound())
+        } yield resp
+      }
+  }
+
+  private val promotedJobsWebhook: HttpRoutes[F] = HttpRoutes.of[F] {
+    case req @ POST -> Root / "webhook" =>
+      val stripeSigHeader =
+        req.headers.get(ci"Stripe-Signature").flatMap(_.toList.headOption).map(_.value)
+      stripeSigHeader match {
+        case Some(signature) =>
+          for {
+            payload <- req.bodyText.compile.string
+            handled <- stripe.handleWebhookEvent(
+              payload,
+              signature,
+              jobId => jobs.activate(UUID.fromString(jobId))
+            )
+            resp <- if (handled.nonEmpty) Ok() else NoContent()
+          } yield resp
+        case None =>
+          Logger[F].info("Got webhook event with no stripe signature") *> Forbidden(
+            "No Stripe Signature"
+          )
+      }
   }
 
   // PUT /jobs/uuid { jobInfo }
@@ -120,17 +159,20 @@ class JobRoutes[F[_]: Concurrent: Logger: SecuredHandler] private (jobs: Jobs[F]
   }
 
   val authedRoutes = SecuredHandler[F].liftService(
-    createJobRoute.restrictedTo(allRoles) |+|
+    createJobRoute.restrictedTo(adminOnly) |+|
       updateJobRoute.restrictedTo(allRoles) |+|
-      deleteJobRoute.restrictedTo(allRoles)
+      deleteJobRoute.restrictedTo(allRoles) |+|
+      promotedJobRoute.restrictedTo(allRoles)
   )
 
-  val unauthedRoutes = allJobsRoute <+> allFiltersRoute <+> findJobRoute
+  val unauthedRoutes =
+    allJobsRoute <+> allFiltersRoute <+> findJobRoute <+> promotedJobsWebhook
   val routes = Router(
     "/jobs" -> (unauthedRoutes <+> authedRoutes)
   )
 }
 
 object JobRoutes {
-  def apply[F[_]: Concurrent: Logger: SecuredHandler](jobs: Jobs[F]) = new JobRoutes[F](jobs)
+  def apply[F[_]: Concurrent: Logger: SecuredHandler](jobs: Jobs[F], stripe: Stripe[F]) =
+    new JobRoutes[F](jobs, stripe)
 }

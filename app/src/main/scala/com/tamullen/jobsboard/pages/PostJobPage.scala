@@ -2,17 +2,20 @@ package com.tamullen.jobsboard.pages
 import cats.effect.IO
 import cats.syntax.traverse.*
 import com.tamullen.jobsboard.App
-import com.tamullen.jobsboard.core.Session
+import com.tamullen.jobsboard.core.{Router, Session}
 import com.tamullen.jobsboard.common.*
+import com.tamullen.jobsboard.components.FilterPanel
 import com.tamullen.jobsboard.domain.Job.JobInfo
 import tyrian.*
 import tyrian.Html.*
-import tyrian.http.*
+import tyrian.http.{Method, *}
 import io.circe.*
 import io.circe.generic.auto.*
 import io.circe.parser.*
 import tyrian.cmds.Logger
 import org.scalajs.dom.{File, FileReader}
+import org.scalajs.dom.HTMLInputElement
+
 import scala.util.Try
 
 case class PostJobPage(
@@ -33,10 +36,6 @@ case class PostJobPage(
     status: Option[Page.Status] = None
 ) extends FormPage("Post Job", status) {
   import PostJobPage.*
-
-  override def view(): Html[App.Msg] =
-    if (Session.isActive) super.view()
-    else renderInvalidPage
 
   override def update(msg: App.Msg): (Page, Cmd[IO, App.Msg]) = msg match {
     case UpdateCompany(c) =>
@@ -73,7 +72,7 @@ case class PostJobPage(
     case AttemptPostJob =>
       (
         this,
-        Commands.postJob(
+        Commands.postJob(promoted = true)(
           company,
           title,
           description,
@@ -97,29 +96,37 @@ case class PostJobPage(
     case _ => (this, Cmd.None)
   }
 
-  override protected def renderFormContent(): List[Html[App.Msg]] = List(
-    renderInput("Company", "company", "text", true, UpdateCompany(_)),
-    renderInput("Title", "title", "text", true, UpdateTitle(_)),
-    renderTextArea("Description", "description", true, UpdateDescription(_)),
-    renderInput("External Url", "externalUrl", "text", true, UpdateExternalUrl(_)),
-    renderInput("Remote", "remote", "checkbox", true, _ => ToggleRemote),
-    renderInput("Location", "location", "text", true, UpdateLocation(_)),
-    renderInput("Salary Low", "salaryLo", "number", false, s => UpdateSalaryLo(parseNumber(s))),
-    renderInput("Salary High", "salaryHi", "number", false, s => UpdateSalaryHi(parseNumber(s))),
-    renderInput("Currency", "currency", "text", false, UpdateCurrency(_)),
-    renderInput("Country", "country", "text", false, UpdateCountry(_)),
-    renderImageUploadInput("Logo", "logo", image, UpdateImageFile(_)),
-    renderInput("Tags", "tags", "text", false, UpdateTags(_)),
-    renderInput("Seniority", "seniority", "text", false, UpdateSeniority(_)),
-    renderInput("Other", "Other", "text", false, UpdateOther(_)),
-    button(`type` := "button", onClick(AttemptPostJob))("Post Job")
-  )
+  override protected def renderFormContent(): List[Html[App.Msg]] =
+    if (!Session.isActive) renderInvalidContents()
+    else
+      List(
+        renderInput("Company", "company", "text", true, UpdateCompany(_)),
+        renderInput("Title", "title", "text", true, UpdateTitle(_)),
+        renderTextArea("Description", "description", true, UpdateDescription(_)),
+        renderInput("External Url", "externalUrl", "text", true, UpdateExternalUrl(_)),
+        renderRemoteCheckbox(false),
+        renderInput("Location", "location", "text", true, UpdateLocation(_)),
+        renderInput("Salary Low", "salaryLo", "number", false, s => UpdateSalaryLo(parseNumber(s))),
+        renderInput(
+          "Salary High",
+          "salaryHi",
+          "number",
+          false,
+          s => UpdateSalaryHi(parseNumber(s))
+        ),
+        renderInput("Currency", "currency", "text", false, UpdateCurrency(_)),
+        renderInput("Country", "country", "text", false, UpdateCountry(_)),
+        renderImageUploadInput("Logo", "logo", image, UpdateImageFile(_)),
+        renderInput("Tags", "tags", "text", false, UpdateTags(_)),
+        renderInput("Seniority", "seniority", "text", false, UpdateSeniority(_)),
+        renderInput("Other", "Other", "text", false, UpdateOther(_)),
+        button(`type` := "button", onClick(AttemptPostJob))("Post Job")
+      )
 
   // private API
-  def renderInvalidPage =
-    div(
-      h1("Post Job"),
-      div("You need to be logged in to post a job.")
+  def renderInvalidContents() =
+    List(
+      p(`class` := "form-text")("You need to be logged in to post a job.")
     )
 
   // util
@@ -131,6 +138,25 @@ case class PostJobPage(
 
   private def parseNumber(s: String) =
     Try(s.toInt).getOrElse(0)
+
+  private def renderRemoteCheckbox(remote: Boolean): Html[App.Msg] =
+    div(`class` := "form-check")(
+      label(`class` := "form-check-label", `for` := s"filter-checkbox")("Remote"),
+      input(
+        `class` := "form-check-input",
+        `type`  := "checkbox",
+        id      := "filter-checkbox",
+        checked(remote),
+        onEvent(
+          "change",
+          event => {
+            // send message to insert value as a checked value inside the groupName's Set in the map
+            val checkbox = event.target.asInstanceOf[HTMLInputElement]
+            ToggleRemote
+          }
+        )
+      )
+    )
 }
 
 object PostJobPage {
@@ -161,28 +187,21 @@ object PostJobPage {
       override val location: String          = Constants.endpoints.postJob
       override val method: Method            = Method.Post
       override val onError: HttpError => Msg = e => PostJobError(e.toString)
-      override val onResponse: Response => Msg = response =>
-        response.status match {
-          case Status(s, _) if s >= 200 && s < 300 =>
-            val jobId = response.body
-            PostJobSuccess(jobId)
-          case Status(401, _) =>
-            PostJobError("You are not authorized to post a job.")
-          case Status(s, _) if s >= 400 && s < 500 =>
-            val json   = response.body
-            val parsed = parse(json).flatMap(_.hcursor.get[String]("error"))
-            parsed match {
-              case Left(e)      => PostJobError(s"Error $e")
-              case Right(error) => PostJobError(error)
-            }
-          case _ =>
-            PostJobError("Unknown reply from server.")
-        }
+      override val onResponse: Response => Msg =
+        Endpoint.onResponseText(PostJobSuccess(_), PostJobError(_))
+    }
+
+    val postJobPromoted = new Endpoint[App.Msg] {
+      override val location: String              = Constants.endpoints.postJobPromoted
+      override val method: Method                = Method.Post
+      override val onError: HttpError => App.Msg = e => PostJobError(e.toString)
+      override val onResponse: Response => App.Msg =
+        Endpoint.onResponseText(Router.ExternalRedirect(_), PostJobError(_))
     }
   }
 
   object Commands {
-    def postJob(
+    def postJob(promoted: Boolean = true)(
         company: String,
         title: String,
         description: String,
@@ -197,8 +216,11 @@ object PostJobPage {
         image: Option[String],
         seniority: Option[String],
         other: Option[String]
-    ) =
-      Endpoints.postJob.callAuthorized(
+    ) = {
+      val endpoint =
+        if (promoted) Endpoints.postJobPromoted
+        else Endpoints.postJob
+      endpoint.callAuthorized(
         JobInfo(
           company,
           title,
@@ -216,6 +238,7 @@ object PostJobPage {
           other
         )
       )
+    }
     def loadFile(maybeFile: Option[File]) =
       Cmd.Run[IO, Option[String], Msg](
         // run the effect here that returns an Option[String]

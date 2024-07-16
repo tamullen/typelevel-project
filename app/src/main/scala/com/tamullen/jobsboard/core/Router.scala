@@ -1,9 +1,10 @@
 package com.tamullen.jobsboard.core
 
 import tyrian.Cmd
-import cats.effect._
+import cats.effect.*
 import fs2.dom.History
 import com.tamullen.jobsboard.*
+import org.scalajs.dom.window
 
 // jobs.rockthejvm.com/login
 //                      ^^ location
@@ -18,13 +19,20 @@ case class Router private (location: String, history: History[IO, String]) {
           else goto(newLocation)         // manual action, need to push location
         (this.copy(location = newLocation), historyCmd)
       }
-    case _ => (this, Cmd.None) // TODO check external redirects as well.
+    case ExternalRedirect(location) =>
+      window.location.href = maybeCleanUrl(location)
+      (this, Cmd.None)
   }
 
   def goto[M](location: String): Cmd[IO, M] =
     Cmd.SideEffect[IO] {
       history.pushState(location, location)
     }
+
+  private def maybeCleanUrl(url: String) =
+    if (url.startsWith("\""))
+      url.substring(1, url.length - 1)
+    else url
 }
 
 object Router {
