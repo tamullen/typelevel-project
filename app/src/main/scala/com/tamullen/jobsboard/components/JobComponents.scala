@@ -3,6 +3,7 @@ package com.tamullen.jobsboard.components
 import tyrian.Html
 import tyrian.Html.*
 import com.tamullen.jobsboard.*
+import com.tamullen.jobsboard.common.Constants
 import com.tamullen.jobsboard.domain.Job
 import com.tamullen.jobsboard.domain.Job.*
 import com.tamullen.jobsboard.pages.Page
@@ -15,11 +16,7 @@ object JobComponents {
   def card(job: Job): Html[App.Msg] =
     div(`class` := "jvm-recent-jobs-cards")(
       div(`class` := "jvm-recent-jobs-card-img")(
-        img(
-          `class` := "img-fluid",
-          src     := job.jobInfo.image.getOrElse(""),
-          alt     := job.jobInfo.title
-        )
+        renderJobPicture(job)
       ),
       div(`class` := "jvm-recent-jobs-card-contents")(
         h5(
@@ -74,6 +71,12 @@ object JobComponents {
   def maybeRenderDetail(icon: String, maybeValue: Option[String]): Html[App.Msg] =
     maybeValue.map(value => renderDetail(icon, value)).getOrElse(div())
 
+  def renderJobPicture(job: Job) =
+    img(
+      `class` := "img-fluid",
+      src     := job.jobInfo.image.getOrElse(Constants.jobImagePlaceholder),
+      alt     := job.jobInfo.title
+    )
   // private
   private def fullSalaryString(job: Job) =
     val currency = job.jobInfo.currency.getOrElse("")

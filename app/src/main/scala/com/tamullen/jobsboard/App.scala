@@ -75,11 +75,12 @@ class App extends TyrianApp[App.Msg, App.Model] {
 
   // triggered whenever the model changes.
   override def view(model: Model): Html[Msg] =
-    div(
+    div(`class` := "app")(
       Header.view(model),
       main(
         div(`class` := "container-fluid")(model.page.view())
-      )
+      ),
+      Footer.view()
 //      div(s"You are now at: ${model.router.location}")
     )
 

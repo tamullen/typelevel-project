@@ -1,3 +1,42 @@
+
+.app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+.footer {
+    background-color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 10px 0;
+    margin-top: auto;
+}
+
+.section-1 {
+    margin-bottom: 10px;
+}
+
+/* Job list page */
+
+.job-list-hero {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    height: 200px;
+    background-size: 300%;
+    background-image: linear-gradient(
+            -45deg, cyan 0%, blue 25%, purple 50%, red 100%
+    );
+    animation: animateBG 20s ease infinite;
+}
+
+.job-list-title {
+    color: white;
+    margin: auto;
+}
+
 .job-detail {
     display: flex;
     align-items: center;
@@ -121,6 +160,42 @@
     display: flex;
     align-items: center;
     flex-direction: column;
+}
+
+.form-submit-btn {
+    width: 100%;
+    margin-top: 20px;
+    border-radius: 10px;
+}
+
+
+.page-status-errors {
+    border: solid 1px red;
+    padding: 10px;
+    color: red;
+    border-radius: 10px;
+    margin: 10px;
+}
+
+.page-status-success {
+    border: solid 1px green;
+    padding: 10px;
+    color: green;
+    border-radius: 5px;
+    margin: 10px;
+}
+
+.job {
+    padding: 12px;
+}
+
+.job label {
+    font-size: 18px;
+    font-weight: 500;
+}
+
+.form-check-input:checked {
+    background-color: var(--background-color);
 }
 
 @keyframes animateBG {

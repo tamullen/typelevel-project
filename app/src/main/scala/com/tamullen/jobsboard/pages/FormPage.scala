@@ -4,8 +4,9 @@ import com.tamullen.jobsboard.*
 import com.tamullen.jobsboard.core.Router
 import org.scalajs.dom.*
 import tyrian.*
-import tyrian.Html.*
+import tyrian.Html.{div, text, *}
 import tyrian.http.*
+
 import scala.concurrent.duration.FiniteDuration
 import com.tamullen.jobsboard.common.Constants
 
@@ -115,7 +116,7 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
         div(`class` := "form-section")(
           div(`class` := "top-section")(
             h1(span(title)),
-            maybeRenderErrors()
+            maybeRenderStatus()
           ),
           // form
           form(
@@ -143,9 +144,35 @@ abstract class FormPage(title: String, status: Option[Page.Status]) extends Page
      */
 
   // UI
-  private def maybeRenderErrors() =
-    status.map(s => div(s.message)).getOrElse(div())
+  private def maybeRenderStatus() =
+    status
+      .map {
+        case Page.Status(message, Page.StatusKind.ERROR) =>
+          div(`class` := "page-status-errors")(message)
+        case Page.Status(message, Page.StatusKind.SUCCESS) =>
+          div(`class` := "page-status-success")(message)
+        case Page.Status(message, Page.StatusKind.LOADING) =>
+          div(`class` := "page-status-loading")(message)
+      }
+      .getOrElse(div())
 
+  protected def renderToggle(
+      name: String,
+      uid: String,
+      isRequired: Boolean,
+      onChange: String => App.Msg
+  ) =
+    div(`class` := "row")(
+      div(`class` := "col-md-6 job")(
+        div(`class` := "form-check form-switch")(
+          label(`for` := uid, `class` := "form-label")(
+            if (isRequired) span("*") else span(),
+            text(name)
+          ),
+          input(`type` := "checkbox", `class` := "form-check-input", id := uid, onInput(onChange))
+        )
+      )
+    )
   // private
   private def clearForm() = {
     Cmd.Run[IO, Unit, App.Msg] {

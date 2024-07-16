@@ -89,7 +89,7 @@ class LiveStripe[F[_]: MonadThrow: Logger](config: StripeConfig) extends Stripe[
           )
         )
       )
-      .logError(e => "Stripe security verification failed - possibly fake attempt") // TODO: Config
+      .logError(e => "Stripe security verification failed - possibly fake attempt")
       .flatMap { event =>
         // check event type
         event.getType() match {

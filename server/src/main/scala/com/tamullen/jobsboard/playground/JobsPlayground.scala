@@ -10,7 +10,6 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 
 import scala.io.StdIn
 
-
 import com.tamullen.jobsboard.domain.Job._
 import com.tamullen.jobsboard.core._
 
@@ -38,18 +37,18 @@ object JobsPlayground extends IOApp.Simple {
 
   override def run: IO[Unit] = postgresResource.use { xa =>
     for {
-      jobs <- LiveJobs[IO](xa)
-      _ <- IO(println("Ready. Next...")) *> IO(StdIn.readLine)
-      id <- jobs.create("travis.a.mullen@gmail.com", jobInfo)
-      _ <- IO(println("Next...")) *> IO(StdIn.readLine)
-      list <- jobs.all()
-      _ <- IO(println(s"All jobs: $list. Next...")) *> IO(StdIn.readLine)
-      _ <- jobs.update(id, jobInfo.copy(title = "Software rockstar"))
-      newJob <- jobs.find(id)
-      _ <- IO(println(s"New Job: $newJob. Next...")) *> IO(StdIn.readLine)
-      _ <- jobs.delete(id)
-      listAfter <- jobs.all()
-      _ <- IO(println(s"Deleted job. List now: $listAfter. Next...")) *> IO(StdIn.readLine)
+      jobs      <- LiveJobs[IO](xa)
+      _         <- IO(println("Ready. Next...")) *> IO(StdIn.readLine)
+      id        <- jobs.create("travis.a.mullen@gmail.com", jobInfo)
+      _         <- IO(println("Next...")) *> IO(StdIn.readLine)
+      list      <- jobs.all().compile.toList
+      _         <- IO(println(s"All jobs: $list. Next...")) *> IO(StdIn.readLine)
+      _         <- jobs.update(id, jobInfo.copy(title = "Software rockstar"))
+      newJob    <- jobs.find(id)
+      _         <- IO(println(s"New Job: $newJob. Next...")) *> IO(StdIn.readLine)
+      _         <- jobs.delete(id)
+      listAfter <- jobs.all().compile.toList
+      _         <- IO(println(s"Deleted job. List now: $listAfter. Next...")) *> IO(StdIn.readLine)
     } yield ()
   }
 }

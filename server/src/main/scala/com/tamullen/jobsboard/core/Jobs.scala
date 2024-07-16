@@ -21,7 +21,7 @@ trait Jobs[F[_]] {
   // "Algebra"
   // CRUD
   def create(ownerEmail: String, jobInfo: JobInfo): F[UUID]
-  def all(): F[List[Job]] // TODO: Fix thoughts on the all() method
+  def all(): fs2.Stream[F, Job]
   def all(filter: JobFilter, pagination: Pagination): F[List[Job]]
   def find(id: UUID): F[Option[Job]]
   def update(id: UUID, jobInfo: JobInfo): F[Option[Job]]
@@ -96,7 +96,7 @@ class LiveJobs[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exten
       .withUniqueGeneratedKeys[UUID]("id")
       .transact(xa)
 
-  override def all(): F[List[Job]] =
+  override def all(): fs2.Stream[F, Job] =
     sql"""
          SELECT
             id,
@@ -121,7 +121,7 @@ class LiveJobs[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exten
         WHERE active = true
        """
       .query[Job]
-      .to[List]
+      .stream
       .transact(xa)
 
   override def all(filter: JobFilter, pagination: Pagination): F[List[Job]] = {
@@ -166,10 +166,13 @@ class LiveJobs[F[_]: MonadCancelThrow: Logger] private (xa: Transactor[F]) exten
       fr"active = True".some
     )
 
-    val paginationFragment: Fragment =
-      fr"ORDER BY id LIMIT ${pagination.limit} OFFSET ${pagination.offset}"
+    val orderFragment: Fragment = fr"ORDER BY date DESC"
 
-    val statement = selectFragment |+| fromFragment |+| whereFragment |+| paginationFragment
+    val paginationFragment: Fragment =
+      fr"LIMIT ${pagination.limit} OFFSET ${pagination.offset}"
+
+    val statement =
+      selectFragment |+| fromFragment |+| whereFragment |+| orderFragment |+| paginationFragment
 
     Logger[F].info(statement.toString)
     statement
