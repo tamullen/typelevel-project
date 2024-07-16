@@ -1,6 +1,5 @@
 package com.tamullen.jobsboard.core
 
-
 import cats.effect.*
 import cats.*
 import cats.implicits.*

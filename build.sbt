@@ -62,7 +62,7 @@ lazy val testContainerVersion       = "1.17.3"
 lazy val logbackVersion             = "1.4.0"
 lazy val slf4jVersion               = "2.0.0"
 lazy val javaMailVersion            = "1.6.2"
-lazy val stripeVersion              = "26.2.0" //"22.12.0"
+lazy val stripeVersion              = "26.2.0" //22.12.0
 
 lazy val server = (project in file("server"))
   .settings(
