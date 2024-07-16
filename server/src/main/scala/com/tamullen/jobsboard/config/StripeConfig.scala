@@ -4,8 +4,9 @@ import pureconfig.ConfigReader
 import pureconfig.generic.derivation.default.*
 
 final case class StripeConfig(
-    val key: String,
-    val price: String,
-    val successUrl: String,
-    val cancelUrl: String
+    key: String,
+    price: String,
+    successUrl: String,
+    cancelUrl: String,
+    webhookSecret: String
 ) derives ConfigReader {}

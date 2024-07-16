@@ -60,6 +60,6 @@ INSERT INTO jobs(
     NULL,
     'Senior',
     NULL,
-    false
+    true
  )
 

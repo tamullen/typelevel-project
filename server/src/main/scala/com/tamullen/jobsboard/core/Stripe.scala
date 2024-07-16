@@ -1,22 +1,28 @@
 package com.tamullen.jobsboard.core
 
-import com.stripe.model.checkout.Session
+
 import cats.effect.*
 import cats.*
 import cats.implicits.*
+import com.stripe.model.checkout.Session
 import com.stripe.param.checkout.SessionCreateParams
 import com.tamullen.jobsboard.logging.Syntax.*
 import org.typelevel.log4cats.Logger
 import com.stripe.Stripe as TheStripe
+import com.stripe.net.Webhook
 import com.tamullen.jobsboard.config.StripeConfig
+import scala.util.Try
+import scala.jdk.OptionConverters.*
 
 trait Stripe[F[_]] {
   /*
     1. someone calls an endpoint on our server.
         (send a JobInfo to us) - persisted to the DB - Jobs[F].create(...)
     2. return a checkout page URL
+
     3. Frontend will redirect user to that URL
     4. User pays (fills in CC details....)
+
     5. backend will be notified by stripe (webhook)
       - test mode: use Stripe CLI to redirect the events to localhost:40401/api/jobs/webhook...
     6. Perform the final operation on the job advert - set the active flag to false for that job id
@@ -26,6 +32,11 @@ trait Stripe[F[_]] {
       activate job <- webhook <- stripe
    */
   def createCheckoutSession(jobId: String, userEmail: String): F[Option[Session]]
+  def handleWebhookEvent[A](
+      payload: String,
+      signature: String,
+      action: String => F[A]
+  ): F[Option[A]]
 }
 
 class LiveStripe[F[_]: MonadThrow: Logger](config: StripeConfig) extends Stripe[F] {
@@ -62,6 +73,52 @@ class LiveStripe[F[_]: MonadThrow: Logger](config: StripeConfig) extends Stripe[
       .map(params => Session.create(params))
       .map(_.some)
       .logError(error => s"Creating checkout session failed: $error")
+      .recover { case _ => None }
+
+  override def handleWebhookEvent[A](
+      payload: String,
+      signature: String,
+      action: String => F[A]
+  ): F[Option[A]] =
+    MonadThrow[F]
+      .fromTry(
+        Try(
+          Webhook.constructEvent(
+            payload,
+            signature,
+            config.webhookSecret
+          )
+        )
+      )
+      .logError(e => "Stripe security verification failed - possibly fake attempt") // TODO: Config
+      .flatMap { event =>
+        // check event type
+        event.getType() match {
+          case "checkout.session.completed" => // happy path
+            event
+              .getDataObjectDeserializer()
+              .getObject()                   // Optional[deserializer]
+              .toScala                       // Option[deserializer]
+              .map(_.asInstanceOf[Session])  // Option[Session]
+              .map(_.getClientReferenceId()) // Option[String] <-- stores my job id.
+              .map(action)                   // Option[F[A]] == performing the effect
+              .sequence                      // F[Option[A]]
+              .log(
+                {
+                  case None =>
+                    s"Event ${event.getId()} not producing any effect, check Stripe dashboard.: ${event
+                        .getDataObjectDeserializer()
+                        .getObject()}" // Optional[deserializer]}"
+                  case Some(v) => s"Event ${event.getId()} fully paid -- ok"
+                },
+                e => s"Webhook action failed: $e"
+              )
+          case _ =>
+            // discard the effect
+            None.pure[F]
+        }
+      }
+      .logError(e => s"Something else went wrong: $e")
       .recover { case _ => None }
 }
 

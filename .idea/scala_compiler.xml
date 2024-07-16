@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="sbt 1" modules="coreJVM,server,typelevel-project,typelevel-project_7617" />
-    <profile name="sbt 2" modules="app">
+    <profile name="sbt 1" modules="coreJVM,server,typelevel-project,typelevel-project.common.coreJVM,typelevel-project.server,typelevel-project_7617" />
+    <profile name="sbt 2" modules="app,typelevel-project.app">
       <parameters>
         <parameter value="-scalajs" />
         <parameter value="-Xsemanticdb" />
@@ -10,7 +10,7 @@
         <parameter value="C:\Users\Travis\Dropbox\Code\typelevel-project\app\target\scala-3.2.1\meta" />
       </parameters>
     </profile>
-    <profile name="sbt 3" modules="coreJS">
+    <profile name="sbt 3" modules="coreJS,typelevel-project.common.coreJS">
       <parameters>
         <parameter value="-scalajs" />
       </parameters>

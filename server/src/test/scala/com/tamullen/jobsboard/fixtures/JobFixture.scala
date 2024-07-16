@@ -5,7 +5,6 @@ import com.tamullen.jobsboard.domain.Job._
 
 import java.util.UUID
 
-
 trait JobFixture {
 
   val NotFoundJobUuid = UUID.fromString("6ea79557-3112-4c84-a8f5-1d1e2c300948")
@@ -32,7 +31,8 @@ trait JobFixture {
       None,
       "Senior".some,
       None
-    )
+    ),
+    active = true
   )
 
   val InvalidJob = Job(
@@ -61,7 +61,8 @@ trait JobFixture {
       "http://www.awesome.com/logo.png".some,
       "Highest".some,
       "Some additional info".some
-    )
+    ),
+    active = true
   )
 
   val RockTheJvmNewJob = JobInfo(
@@ -84,7 +85,7 @@ trait JobFixture {
   val RockTheJvmJobWithNotFoundId = AwesomeJob.copy(id = NotFoundJobUuid)
 
   val AnotherAwesomeJobUuid = UUID.fromString("19a941d0-aa19-477b-9ab0-a7033ae65c2b")
-  val AnotherAwesomeJob = AwesomeJob.copy(id = AnotherAwesomeJobUuid)
+  val AnotherAwesomeJob     = AwesomeJob.copy(id = AnotherAwesomeJobUuid)
 
   val RockTheJvmAwesomeJob =
     AwesomeJob.copy(jobInfo = AwesomeJob.jobInfo.copy(company = "RockTheJvm"))
